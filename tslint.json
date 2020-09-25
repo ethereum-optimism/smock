@@ -19,16 +19,17 @@
         "no-string-literal": false,
         "no-submodule-imports": false,
         "no-unused-expression": false,
+        "object-literal-shorthand": false,
         "object-literal-sort-keys": false,
         "ordered-imports": false,
         "semicolon": false,
         "variable-name": false,
         "no-focused-test": true,
-        "prettier": [true, ".prettier-config.json"]
+        "prettier": [true, "./prettier-config.json"]
     },
     "linterOptions": {
         "exclude": [
-        "**/node_modules/**/*"
+            "**/node_modules/**/*"
         ]
     }
 }

@@ -5,15 +5,13 @@ import { Contract, ContractFactory, ContractInterface, ethers } from 'ethers'
 /* Imports: Internal */
 import { toHexString, fromHexString } from './buffer-utils'
 
-export type MockReturnValue = 
+export type MockReturnValue =
   | string
   | Object
   | any[]
   | ((...params: any[]) => MockReturnValue)
 
 export interface MockContractFunction {
-
-  
   calls: string[]
 
   will: {
@@ -25,10 +23,12 @@ export interface MockContractFunction {
 }
 
 export interface MockContract extends Contract {
-  _smockit: (data: Buffer) => {
-    resolve: 'return' | 'revert',
+  _smockit: (
+    data: Buffer
+  ) => {
+    resolve: 'return' | 'revert'
     returnValue: Buffer
-  },
+  }
   smocked: {
     [functionName: string]: MockContractFunction
   }
@@ -48,11 +48,11 @@ const initSmock = (vm: any): void => {
   if (vm._smock) {
     return
   }
-  
+
   vm._smock = {
     mocks: {},
     calls: {},
-    messages: []
+    messages: [],
   }
 
   vm.on('beforeTx', () => {
@@ -85,11 +85,8 @@ const initSmock = (vm: any): void => {
     const message = vm._smock.messages.pop()
     const target = toHexString(message.to).toLowerCase()
     const mock: MockContract = vm._smock.mocks[target]
-    
-    const {
-      resolve,
-      returnValue
-    } = mock._smockit(message.data)
+
+    const { resolve, returnValue } = mock._smockit(message.data)
 
     if (resolve === 'revert') {
       // TODO: Handle reverts. Requires adding new logic to beforeMessage handler forcing the
@@ -100,13 +97,22 @@ const initSmock = (vm: any): void => {
   })
 }
 
-const bindSmock = (
-  mock: MockContract
-): void => {
+const bindSmock = (mock: MockContract): void => {
   const vm = bre.network.provider['_node' as any]['_vm' as any]
   initSmock(vm)
 
-  vm._smock.mocks[mock.address] = mock
+  vm._smock.mocks[mock.address.toLowerCase()] = mock
+}
+
+const makeRandomAddress = (): string => {
+  return ethers.utils.getAddress(
+    '0x' +
+      [...Array(40)]
+        .map(() => {
+          return Math.floor(Math.random() * 16).toString(16)
+        })
+        .join('')
+  )
 }
 
 export const smock = (
@@ -114,11 +120,11 @@ export const smock = (
   provider?: any
 ): MockContract => {
   const iface: ContractInterface = (spec as any).interface || spec
-  const contract = (new ethers.Contract(
-    '0xc0dec0dec0dec0dec0dec0dec0dec0dec0dec0de',
+  const contract = new ethers.Contract(
+    makeRandomAddress(),
     iface,
     provider || (spec as any).provider
-  ) as MockContract)
+  ) as MockContract
 
   contract.smocked = {}
   for (const functionName of Object.keys(contract.functions)) {
@@ -128,11 +134,11 @@ export const smock = (
       },
 
       will: {
-        return: function(returnValue?: MockReturnValue): void {
+        return: function (returnValue?: MockReturnValue): void {
           this.resolve = 'return'
           this.returnValue = returnValue
         },
-        revert: function(revertValue?: string): void {
+        revert: function (revertValue?: string): void {
           this.resolve = 'revert'
           this.returnValue = revertValue
         },
@@ -142,8 +148,10 @@ export const smock = (
     }
   }
 
-  contract._smockit = function(data: Buffer): {
-    resolve: 'return' | 'revert',
+  contract._smockit = function (
+    data: Buffer
+  ): {
+    resolve: 'return' | 'revert'
     returnValue: Buffer
   } {
     const calldata = toHexString(data)
@@ -153,17 +161,23 @@ export const smock = (
     const params = this.interface.decodeFunctionData(fn, calldata)
 
     const mockFn = this.smocked[fn.name]
-    const rawReturnValue = mockFn.will.returnValue instanceof Function
-      ? mockFn.will.returnValue(...params)
-      : mockFn.will.returnValue
+    const rawReturnValue =
+      mockFn.will.returnValue instanceof Function
+        ? mockFn.will.returnValue(...params)
+        : mockFn.will.returnValue
 
     let encodedReturnValue: string = '0x'
     if (rawReturnValue !== undefined) {
       try {
-        encodedReturnValue = this.interface.encodeFunctionResult(fn, Array.isArray(rawReturnValue) ? rawReturnValue : [rawReturnValue])
+        encodedReturnValue = this.interface.encodeFunctionResult(
+          fn,
+          Array.isArray(rawReturnValue) ? rawReturnValue : [rawReturnValue]
+        )
       } catch {
         if (typeof rawReturnValue !== 'string') {
-          throw new Error(`Could not properly encode mock return value for ${fn.name}`)
+          throw new Error(
+            `Could not properly encode mock return value for ${fn.name}`
+          )
         }
 
         encodedReturnValue = rawReturnValue
@@ -172,7 +186,7 @@ export const smock = (
 
     return {
       resolve: mockFn.will.resolve,
-      returnValue: fromHexString(encodedReturnValue)
+      returnValue: fromHexString(encodedReturnValue),
     }
   }
 

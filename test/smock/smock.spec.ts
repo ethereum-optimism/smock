@@ -13,7 +13,9 @@ describe('smock', () => {
       let SimpleGetter: Contract
       let mock: MockContract
       before(async () => {
-        SimpleGetter = await (await ethers.getContractFactory('SimpleGetter')).deploy()
+        SimpleGetter = await (
+          await ethers.getContractFactory('SimpleGetter')
+        ).deploy()
         mock = smock(SimpleGetter)
       })
 
@@ -22,9 +24,7 @@ describe('smock', () => {
 
         mock.smocked.getString.will.return(ret)
 
-        expect(
-          await mock.getString()
-        ).to.equal(ret)
+        expect(await mock.getString()).to.equal(ret)
       })
 
       it('should be able to return a uint256', async () => {
@@ -32,9 +32,7 @@ describe('smock', () => {
 
         mock.smocked.getUint256.will.return(ret)
 
-        expect(
-          await mock.getUint256()
-        ).to.equal(ret)
+        expect(await mock.getUint256()).to.equal(ret)
       })
 
       it('should be able to return a boolean', async () => {
@@ -42,24 +40,20 @@ describe('smock', () => {
 
         mock.smocked.getBool.will.return(ret)
 
-        expect(
-          await mock.getBool()
-        ).to.equal(ret)
+        expect(await mock.getBool()).to.equal(ret)
       })
 
       it('should be able to return a simple struct', async () => {
         const ret = {
           valueA: BigNumber.from(1234),
-          valueB: true
+          valueB: true,
         }
 
         mock.smocked.getSimpleStruct.will.return(ret)
 
-        expect(
-          _.toPlainObject(
-            await mock.getSimpleStruct()
-          )
-        ).to.deep.include(ret)
+        expect(_.toPlainObject(await mock.getSimpleStruct())).to.deep.include(
+          ret
+        )
       })
     })
   })
