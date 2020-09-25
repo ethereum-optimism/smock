@@ -5,7 +5,7 @@ import { BigNumber, Contract } from 'ethers'
 import _ from 'lodash'
 
 /* Imports: Internal */
-import { MockContract, smock } from '../../src/smock'
+import { MockContract, smockit } from '../../src/smock'
 
 describe('smock', () => {
   describe('from contract', () => {
@@ -16,13 +16,13 @@ describe('smock', () => {
         SimpleGetter = await (
           await ethers.getContractFactory('SimpleGetter')
         ).deploy()
-        mock = smock(SimpleGetter)
+        mock = smockit(SimpleGetter)
       })
 
       it('should be able to return a string', async () => {
         const ret = 'Hello world!'
 
-        mock.smocked.getString.will.return(ret)
+        mock.smocked.getString.will.return.with(ret)
 
         expect(await mock.getString()).to.equal(ret)
       })
@@ -30,7 +30,7 @@ describe('smock', () => {
       it('should be able to return a uint256', async () => {
         const ret = 1234
 
-        mock.smocked.getUint256.will.return(ret)
+        mock.smocked.getUint256.will.return.with(ret)
 
         expect(await mock.getUint256()).to.equal(ret)
       })
@@ -38,7 +38,7 @@ describe('smock', () => {
       it('should be able to return a boolean', async () => {
         const ret = true
 
-        mock.smocked.getBool.will.return(ret)
+        mock.smocked.getBool.will.return.with(ret)
 
         expect(await mock.getBool()).to.equal(ret)
       })
@@ -49,7 +49,7 @@ describe('smock', () => {
           valueB: true,
         }
 
-        mock.smocked.getSimpleStruct.will.return(ret)
+        mock.smocked.getSimpleStruct.will.return.with(ret)
 
         expect(_.toPlainObject(await mock.getSimpleStruct())).to.deep.include(
           ret

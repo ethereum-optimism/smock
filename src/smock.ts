@@ -15,8 +15,14 @@ export interface MockContractFunction {
   calls: string[]
 
   will: {
-    return: (returnValue?: MockReturnValue) => void
-    revert: (revertValue?: string) => void
+    return: {
+      (): void
+      with: (returnValue?: MockReturnValue) => void
+    }
+    revert: {
+      (): void
+      with: (revertValue?: string) => void
+    }
     resolve: 'return' | 'revert'
     returnValue: MockReturnValue
   }
@@ -115,7 +121,7 @@ const makeRandomAddress = (): string => {
   )
 }
 
-export const smock = (
+export const smockit = (
   spec: ContractInterface | Contract | ContractFactory,
   provider?: any
 ): MockContract => {
@@ -134,13 +140,29 @@ export const smock = (
       },
 
       will: {
-        return: function (returnValue?: MockReturnValue): void {
-          this.resolve = 'return'
-          this.returnValue = returnValue
+        get return() {
+          const fn: any = () => {
+            this.resolve = 'return'
+          }
+
+          fn.with = (returnValue?: MockReturnValue): void => {
+            this.resolve = 'return'
+            this.returnValue = returnValue
+          }
+
+          return fn
         },
-        revert: function (revertValue?: string): void {
-          this.resolve = 'revert'
-          this.returnValue = revertValue
+        get revert() {
+          const fn: any = () => {
+            this.resolve = 'revert'
+          }
+
+          fn.with = (revertValue?: string): void => {
+            this.resolve = 'revert'
+            this.returnValue = revertValue
+          }
+
+          return fn
         },
         resolve: 'return',
         returnValue: '0x',
