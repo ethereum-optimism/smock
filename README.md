@@ -2,6 +2,12 @@
 
 `smock` is a utility package that can generate mock Solidity contracts (for testing). `smock` hooks into a `ethereumjs-vm` instance so that mock contract functions can be written entirely in JavaScript. `smock` currently only supports [buidler](https://buidler.dev), but will be extended to support other testing frameworks.
 
+Some nice benefits of hooking in at the VM level:
+* Don't need to deploy any special contracts just for mocking!
+* All of the calls are synchronous.
+* Perform arbitrary javascript logic within your return value (return a function).
+* It sounds cool.
+
 ## Examples
 
 ### Via `ethers.Contract`
