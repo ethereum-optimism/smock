@@ -3,6 +3,8 @@ import { usePlugin, BuidlerConfig } from '@nomiclabs/buidler/config'
 usePlugin('@nomiclabs/buidler-ethers')
 usePlugin('@nomiclabs/buidler-waffle')
 
+import './src/buidler-plugins/compiler-storage-layout'
+
 const config: BuidlerConfig = {
   paths: {
     sources: './test/contracts',

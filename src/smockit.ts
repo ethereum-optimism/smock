@@ -3,7 +3,7 @@ import bre from '@nomiclabs/buidler'
 import { Contract, ContractFactory, ContractInterface, ethers } from 'ethers'
 
 /* Imports: Internal */
-import { toHexString, fromHexString } from './buffer-utils'
+import { toHexString, fromHexString } from './utils/hex-utils'
 
 export type MockReturnValue =
   | string

@@ -5,7 +5,7 @@ import { BigNumber, Contract } from 'ethers'
 import _ from 'lodash'
 
 /* Imports: Internal */
-import { MockContract, smockit } from '../../src/smock'
+import { MockContract, smockit } from '../../src/smockit'
 
 describe('smock', () => {
   describe('from contract', () => {
