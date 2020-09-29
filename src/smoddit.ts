@@ -23,6 +23,7 @@ export interface ModifiableContract extends Contract {
   smodify: {
     put: (storage: any) => void
     set: (storage: any) => void
+    check: (storage: any) => Promise<boolean>
     reset: () => void
   }
 
@@ -238,6 +239,7 @@ export const smoddit = async (
   )) as ModifiableContractFactory
   const layout = await getStorageLayout(name)
 
+  const pStateManager = bre.network.provider['_node' as any]['_vm' as any].pStateManager
   const originalDeployFn = factory.deploy.bind(factory)
   factory.deploy = async (...args: any[]): Promise<ModifiableContract> => {
     const contract: ModifiableContract = await originalDeployFn(...args)
@@ -256,6 +258,19 @@ export const smoddit = async (
       set: function (storage: any) {
         this.reset()
         this.put(storage)
+      },
+      check: async function (storage: any) {
+        if (!storage) {
+          return
+        }
+
+        const slots = getStorageSlots(layout, storage)
+        return slots.every(async (slot) => {
+          return toHexString32(await pStateManager.getContractStorage(
+            fromHexString(this.address),
+            fromHexString(slot.hash.toLowerCase())
+          )) === slot.value
+        })
       },
       reset: function () {
         contract._smodded = {}

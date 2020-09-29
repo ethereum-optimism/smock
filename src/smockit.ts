@@ -132,11 +132,30 @@ export const smockit = (
     provider || (spec as any).provider
   ) as MockContract
 
+  const vm = bre.network.provider['_node' as any]['_vm' as any]
   contract.smocked = {}
   for (const functionName of Object.keys(contract.functions)) {
     contract.smocked[functionName] = {
       get calls() {
-        return this._calls
+        return vm._smock.calls[contract.address.toLowerCase()].map((calldataBuf: Buffer) => {
+          const calldata = toHexString(calldataBuf)
+          const fragment = contract.interface.getFunction(calldata)
+
+          let data: any = calldata
+          try {
+            data = contract.interface.decodeFunctionData(
+              fragment.name,
+              calldata
+            )
+          } catch {}
+
+          return {
+            functionName: fragment.name,
+            data,
+          }
+        }).filter((functionResult: any) => {
+          return functionResult.functionName === functionName
+        })
       },
 
       will: {

@@ -1,7 +1,7 @@
 {
-  "name": "buidler-mocks",
-  "version": "1.0.0",
-  "main": "src/index.js",
+  "name": "@eth-optimism/smock",
+  "version": "0.0.1",
+  "main": "build/src/index.js",
   "license": "MIT",
   "scripts": {
     "build": "tsc -p .",
