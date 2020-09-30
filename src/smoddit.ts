@@ -178,6 +178,7 @@ const initSmod = (vm: any): void => {
   }
 
   const pStateManager = vm.pStateManager
+
   const originalGetStorageFn = pStateManager.getContractStorage.bind(
     pStateManager
   )
@@ -185,7 +186,13 @@ const initSmod = (vm: any): void => {
     addressBuf: Buffer,
     keyBuf: Buffer
   ): Promise<Buffer> => {
-    const originalReturnValue = originalGetStorageFn(addressBuf, keyBuf)
+    const originalReturnValue = await originalGetStorageFn(addressBuf, keyBuf)
+
+    // Don't return the value if it's been set by the contract.
+    if (originalReturnValue.length !== 0) {
+      return originalReturnValue
+    }
+
     const address = toHexString(addressBuf).toLowerCase()
     const key = toHexString(keyBuf).toLowerCase()
 
@@ -239,7 +246,8 @@ export const smoddit = async (
   )) as ModifiableContractFactory
   const layout = await getStorageLayout(name)
 
-  const pStateManager = bre.network.provider['_node' as any]['_vm' as any].pStateManager
+  const pStateManager =
+    bre.network.provider['_node' as any]['_vm' as any].pStateManager
   const originalDeployFn = factory.deploy.bind(factory)
   factory.deploy = async (...args: any[]): Promise<ModifiableContract> => {
     const contract: ModifiableContract = await originalDeployFn(...args)
@@ -261,15 +269,19 @@ export const smoddit = async (
       },
       check: async function (storage: any) {
         if (!storage) {
-          return
+          return true
         }
 
         const slots = getStorageSlots(layout, storage)
         return slots.every(async (slot) => {
-          return toHexString32(await pStateManager.getContractStorage(
-            fromHexString(this.address),
-            fromHexString(slot.hash.toLowerCase())
-          )) === slot.value
+          return (
+            toHexString32(
+              await pStateManager.getContractStorage(
+                fromHexString(contract.address),
+                fromHexString(slot.hash.toLowerCase())
+              )
+            ) === slot.value
+          )
         })
       },
       reset: function () {

@@ -49,7 +49,7 @@ const initSmock = (vm: any): void => {
     mocks: {},
     calls: {},
     messages: [],
-    shouldReturnCode: false
+    shouldReturnCode: false,
   }
 
   vm.on('beforeTx', () => {
@@ -101,7 +101,9 @@ const initSmock = (vm: any): void => {
     vm._smock.shouldReturnCode = false
   })
 
-  const originalGetContractCodeFn = vm.pStateManager.getContractCode.bind(vm.pStateManager)
+  const originalGetContractCodeFn = vm.pStateManager.getContractCode.bind(
+    vm.pStateManager
+  )
   vm.pStateManager.getContractCode = async (
     addressBuf: Buffer
   ): Promise<Buffer> => {
@@ -148,27 +150,27 @@ export const smockit = (
   for (const functionName of Object.keys(contract.functions)) {
     contract.smocked[functionName] = {
       get calls() {
-        return vm._smock.calls[contract.address.toLowerCase()].map((calldataBuf: Buffer) => {
-          const sighash = toHexString(calldataBuf.slice(0, 4))
-          const fragment = contract.interface.getFunction(sighash)
+        return vm._smock.calls[contract.address.toLowerCase()]
+          .map((calldataBuf: Buffer) => {
+            const sighash = toHexString(calldataBuf.slice(0, 4))
+            const fragment = contract.interface.getFunction(sighash)
 
-          let data: any = toHexString(calldataBuf)
-          try {
-            data = contract.interface.decodeFunctionData(
-              fragment.name,
-              data
-            )
-          } catch {}
+            let data: any = toHexString(calldataBuf)
+            try {
+              data = contract.interface.decodeFunctionData(fragment.name, data)
+            } catch {}
 
-          return {
-            functionName: fragment.name,
-            data,
-          }
-        }).filter((functionResult: any) => {
-          return functionResult.functionName === functionName
-        }).map((functionResult: any) => {
-          return functionResult.data
-        })
+            return {
+              functionName: fragment.name,
+              data,
+            }
+          })
+          .filter((functionResult: any) => {
+            return functionResult.functionName === functionName
+          })
+          .map((functionResult: any) => {
+            return functionResult.data
+          })
       },
 
       will: {
