@@ -184,7 +184,7 @@ const initSmod = (vm: any): void => {
   pStateManager.getContractStorage = async (
     addressBuf: Buffer,
     keyBuf: Buffer
-  ): Promise<any> => {
+  ): Promise<Buffer> => {
     const originalReturnValue = originalGetStorageFn(addressBuf, keyBuf)
     const address = toHexString(addressBuf).toLowerCase()
     const key = toHexString(keyBuf).toLowerCase()

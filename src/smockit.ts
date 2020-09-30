@@ -40,16 +40,6 @@ export interface MockContract extends Contract {
   }
 }
 
-interface SmockState {
-  mocks: {
-    [address: string]: MockContract
-  }
-  calls: {
-    [address: string]: string[]
-  }
-  messages: any[]
-}
-
 const initSmock = (vm: any): void => {
   if (vm._smock) {
     return
@@ -59,6 +49,7 @@ const initSmock = (vm: any): void => {
     mocks: {},
     calls: {},
     messages: [],
+    shouldReturnCode: false
   }
 
   vm.on('beforeTx', () => {
@@ -81,6 +72,9 @@ const initSmock = (vm: any): void => {
 
     vm._smock.calls[target].push(message.data)
     vm._smock.messages.push(message)
+
+    // Return the real (empty) while in the message context.
+    vm._smock.shouldReturnCode = true
   })
 
   vm.on('afterMessage', async (result: any) => {
@@ -101,6 +95,23 @@ const initSmock = (vm: any): void => {
       result.execResult.returnValue = returnValue
     }
   })
+
+  vm.on('step', () => {
+    // Return the fake (non-empty) while in the interpreter context.
+    vm._smock.shouldReturnCode = false
+  })
+
+  const originalGetContractCodeFn = vm.pStateManager.getContractCode.bind(vm.pStateManager)
+  vm.pStateManager.getContractCode = async (
+    addressBuf: Buffer
+  ): Promise<Buffer> => {
+    const address = toHexString(addressBuf).toLowerCase()
+    if (address in vm._smock.mocks && vm._smock.shouldReturnCode === false) {
+      return Buffer.from('F3', 'hex')
+    } else {
+      return originalGetContractCodeFn(addressBuf)
+    }
+  }
 }
 
 const bindSmock = (mock: MockContract): void => {
@@ -138,14 +149,14 @@ export const smockit = (
     contract.smocked[functionName] = {
       get calls() {
         return vm._smock.calls[contract.address.toLowerCase()].map((calldataBuf: Buffer) => {
-          const calldata = toHexString(calldataBuf)
-          const fragment = contract.interface.getFunction(calldata)
+          const sighash = toHexString(calldataBuf.slice(0, 4))
+          const fragment = contract.interface.getFunction(sighash)
 
-          let data: any = calldata
+          let data: any = toHexString(calldataBuf)
           try {
             data = contract.interface.decodeFunctionData(
               fragment.name,
-              calldata
+              data
             )
           } catch {}
 
@@ -155,6 +166,8 @@ export const smockit = (
           }
         }).filter((functionResult: any) => {
           return functionResult.functionName === functionName
+        }).map((functionResult: any) => {
+          return functionResult.data
         })
       },
 
