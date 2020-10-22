@@ -55,6 +55,12 @@ describe('smock', () => {
           ret
         )
       })
+
+      it('should be able to do reverts', async () => {
+        mock.smocked.getString.will.revert()
+
+        await expect(mock.getString()).to.be.reverted
+      })
     })
   })
 })

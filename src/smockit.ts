@@ -1,5 +1,6 @@
 /* Imports: External */
 import bre from '@nomiclabs/buidler'
+import { TransactionExecutionError } from '@nomiclabs/buidler/internal/buidler-evm/provider/errors'
 import { Contract, ContractFactory, ContractInterface, ethers } from 'ethers'
 
 /* Imports: Internal */
@@ -36,6 +37,16 @@ export interface MockContract extends Contract {
   }
   smocked: {
     [functionName: string]: MockContractFunction
+  }
+}
+
+class VmError {
+  error: string
+  errorType: string
+
+  constructor(error: string) {
+    this.error = error
+    this.errorType = 'VmError'
   }
 }
 
@@ -87,11 +98,9 @@ const initSmock = (vm: any): void => {
 
     const { resolve, returnValue } = mock._smockit(message.data)
 
+    result.execResult.returnValue = returnValue
     if (resolve === 'revert') {
-      // TODO: Handle reverts. Requires adding new logic to beforeMessage handler forcing the
-      // result to be a revert, not easy.
-    } else {
-      result.execResult.returnValue = returnValue
+      result.execResult.exceptionError = new VmError('smocked revert')
     }
   })
 
@@ -111,6 +120,19 @@ const initSmock = (vm: any): void => {
       return Buffer.from('F3', 'hex')
     } else {
       return originalGetContractCodeFn(addressBuf)
+    }
+  }
+
+  const originalManagerErrorsFn = bre.network.provider['_node' as any]['_manageErrors' as any]
+  bre.network.provider['_node' as any]['_manageErrors' as any] = async (
+    vmResult: any,
+    vmTrace: any,
+    vmTracerError?: any
+  ): Promise<any> => {
+    if (vmResult.exceptionError && vmResult.exceptionError.error === 'smocked revert') {
+      throw new TransactionExecutionError("Transaction failed: revert")
+    } else {
+      return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
     }
   }
 }
@@ -184,6 +206,7 @@ export const smockit = async (
         get return() {
           const fn: any = () => {
             this.resolve = 'return'
+            this.returnValue = undefined
           }
 
           fn.with = (returnValue?: MockReturnValue): void => {
@@ -196,6 +219,7 @@ export const smockit = async (
         get revert() {
           const fn: any = () => {
             this.resolve = 'revert'
+            this.returnValue = undefined
           }
 
           fn.with = (revertValue?: string): void => {
