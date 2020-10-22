@@ -16,7 +16,7 @@ describe('smock', () => {
         SimpleGetter = await (
           await ethers.getContractFactory('SimpleGetter')
         ).deploy()
-        mock = smockit(SimpleGetter)
+        mock = await smockit(SimpleGetter)
       })
 
       it('should be able to return a string', async () => {

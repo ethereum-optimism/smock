@@ -90,10 +90,10 @@ import { smockit } from '@eth-optimism/smock'
 
 ##### Signature
 ```typescript
-const smockit = (
+const smockit = async (
   spec: ContractInterface | Contract | ContractFactory,
   provider?: any
-): MockContract
+): Promise<MockContract>
 ```
 
 #### `smoddit`
@@ -104,7 +104,7 @@ import { smoddit } from '@eth-optimism/smock'
 
 ##### Signature
 ```typescript
-const smockit = (
+const smoddit = async (
   name: string,
   signer?: any
 ): Promise<ModifiableContractFactory>
@@ -135,7 +135,6 @@ interface MockContractFunction {
       with: (revertValue?: string) => void
     }
     resolve: 'return' | 'revert'
-    returnValue: MockReturnValue
   }
 }
 ```
@@ -179,7 +178,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.myFunction.will.return.with('Some return value!')
 
@@ -198,7 +197,7 @@ const MyOtherContractFactory = await ethers.getContractFactory('MyOtherContract'
 const MyOtherContract = await MyOtherContract.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.return.with('Some return value!')
 
@@ -220,7 +219,7 @@ const MyOtherContractFactory = await ethers.getContractFactory('MyOtherContract'
 const MyOtherContract = await MyOtherContract.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.return.with('Some return value!')
 
@@ -239,7 +238,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.return()
 
@@ -255,7 +254,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.return.with({
     valueA: 'Some value',
@@ -275,7 +274,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.return.with(() => {
   return 'Some return value!'
@@ -293,7 +292,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.return.with((myFunctionArgument: string) => {
   return myFunctionArgument
@@ -311,7 +310,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.revert()
 
@@ -327,7 +326,7 @@ const MyContractFactory = await ethers.getContractFactory('MyContract')
 const MyContract = await MyContractFactory.deploy(...)
 
 // Smockit!
-const MyMockContract = smockit(MyContract)
+const MyMockContract = await smockit(MyContract)
 
 MyMockContract.smocked.myFunction.will.revert.with('0x1234')
 

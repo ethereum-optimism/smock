@@ -21,7 +21,7 @@ describe('smoddit', () => {
 
       let smod: ModifiableContract
       beforeEach(async () => {
-        smod = await SmodFactory.deploy()
+        smod = await SmodFactory.deploy(4321)
       })
 
       it('should be able to return a uint256', async () => {
@@ -88,6 +88,28 @@ describe('smoddit', () => {
         expect(await smod.getNestedUint256MapValue(retKeyA, retKeyB)).to.equal(
           retVal
         )
+      })
+
+      it('should not return the set value if the value has been changed by the contract', async () => {
+        const ret = 1234
+
+        smod.smodify.put({
+          _uint256: ret,
+        })
+
+        await smod.setUint256(4321)
+
+        expect(await smod.getUint256()).to.equal(4321)
+      })
+
+      it('should return the set value if it was set in the constructor', async () => {
+        const ret = 1234
+
+        smod.smodify.put({
+          _constructorUint256: ret,
+        })
+
+        expect(await smod.getConstructorUint256()).to.equal(1234)
       })
     })
   })

@@ -7,11 +7,28 @@ contract SimpleStorageGetter {
         bool valueB;
     }
 
+    uint256 internal _constructorUint256;
     uint256 internal _uint256;
     bool internal _bool;
     SimpleStruct internal _SimpleStruct;
     mapping (uint256 => uint256) _uint256Map;
     mapping (uint256 => mapping (uint256 => uint256)) _uint256NestedMap;
+
+    constructor(
+        uint256 _inA
+    ) {
+        _constructorUint256 = _inA;
+    }
+
+    function getConstructorUint256()
+        public
+        view
+        returns (
+            uint256 _out
+        )
+    {
+        return _constructorUint256;
+    }
 
     function getUint256()
         public
@@ -21,6 +38,14 @@ contract SimpleStorageGetter {
         )
     {
         return _uint256;
+    }
+
+    function setUint256(
+        uint256 _in
+    )
+        public
+    {
+        _uint256 = _in;
     }
 
     function getBool()

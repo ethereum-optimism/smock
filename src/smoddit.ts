@@ -188,11 +188,6 @@ const initSmod = (vm: any): void => {
   ): Promise<Buffer> => {
     const originalReturnValue = await originalGetStorageFn(addressBuf, keyBuf)
 
-    // Don't return the value if it's been set by the contract.
-    if (originalReturnValue.length !== 0) {
-      return originalReturnValue
-    }
-
     const address = toHexString(addressBuf).toLowerCase()
     const key = toHexString(keyBuf).toLowerCase()
 
@@ -206,6 +201,31 @@ const initSmod = (vm: any): void => {
     }
 
     return fromHexString(contract._smodded[key])
+  }
+
+  const originalPutStorageFn = pStateManager.putContractStorage.bind(
+    pStateManager
+  )
+  pStateManager.putContractStorage = async (
+    addressBuf: Buffer,
+    keyBuf: Buffer,
+    valBuf: Buffer
+  ): Promise<void> => {
+    await originalPutStorageFn(addressBuf, keyBuf, valBuf)
+
+    const address = toHexString(addressBuf).toLowerCase()
+    const key = toHexString(keyBuf).toLowerCase()
+
+    if (!(address in vm._smod.contracts)) {
+      return
+    }
+
+    const contract: ModifiableContract = vm._smod.contracts[address]
+    if (!(key in contract._smodded)) {
+      return
+    }
+
+    delete contract._smodded[key]
   }
 }
 

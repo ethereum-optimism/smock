@@ -24,7 +24,6 @@ export interface MockContractFunction {
       with: (revertValue?: string) => void
     }
     resolve: 'return' | 'revert'
-    returnValue: MockReturnValue
   }
 }
 
@@ -134,10 +133,18 @@ const makeRandomAddress = (): string => {
   )
 }
 
-export const smockit = (
+export const smockit = async (
   spec: ContractInterface | Contract | ContractFactory,
   provider?: any
-): MockContract => {
+): Promise<MockContract> => {
+  if (bre.network.name !== 'buidlerevm') {
+    throw new Error('smockit currently only supports the buidlerevm.')
+  }
+
+  if (!bre.network.provider['_node' as any]) {
+    await bre.network.provider['_init' as any]()
+  }
+
   const iface: ContractInterface = (spec as any).interface || spec
   const contract = new ethers.Contract(
     makeRandomAddress(),
@@ -199,7 +206,6 @@ export const smockit = (
           return fn
         },
         resolve: 'return',
-        returnValue: '0x',
       },
     }
   }
