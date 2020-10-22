@@ -123,14 +123,18 @@ const initSmock = (vm: any): void => {
     }
   }
 
-  const originalManagerErrorsFn = bre.network.provider['_node' as any]['_manageErrors' as any]
+  const originalManagerErrorsFn =
+    bre.network.provider['_node' as any]['_manageErrors' as any]
   bre.network.provider['_node' as any]['_manageErrors' as any] = async (
     vmResult: any,
     vmTrace: any,
     vmTracerError?: any
   ): Promise<any> => {
-    if (vmResult.exceptionError && vmResult.exceptionError.error === 'smocked revert') {
-      throw new TransactionExecutionError("Transaction failed: revert")
+    if (
+      vmResult.exceptionError &&
+      vmResult.exceptionError.error === 'smocked revert'
+    ) {
+      throw new TransactionExecutionError('Transaction failed: revert')
     } else {
       return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
     }
