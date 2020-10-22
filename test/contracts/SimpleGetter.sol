@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.7.0;
 pragma experimental ABIEncoderV2;
 
@@ -14,7 +15,17 @@ contract SimpleGetter {
             string memory _out
         )
     {
-        return "";
+        return _out;
+    }
+
+    function getBytes()
+        public
+        pure
+        returns (
+            bytes memory _out
+        )
+    {
+        return _out;
     }
 
     function getUint256()
@@ -24,7 +35,7 @@ contract SimpleGetter {
             uint256 _out
         )
     {
-        return 0;
+        return _out;
     }
 
     function getBool()
@@ -34,7 +45,7 @@ contract SimpleGetter {
             bool _out
         )
     {
-        return false;
+        return _out;
     }
 
     function getSimpleStruct()
@@ -44,9 +55,26 @@ contract SimpleGetter {
             SimpleStruct memory _out
         )
     {
-        return SimpleStruct({
-            valueA: 0,
-            valueB: false
-        });
+        return _out;
+    }
+
+    function getUint256Array()
+        public
+        pure
+        returns (
+            uint256[] memory _out
+        )
+    {
+        return _out;
+    }
+
+    function getUint256Tuple()
+        public
+        pure
+        returns (
+            uint256 _outA, uint256 _outB
+        )
+    {
+        return (_outA, _outB);
     }
 }

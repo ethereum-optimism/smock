@@ -27,6 +27,14 @@ describe('smock', () => {
         expect(await mock.getString()).to.equal(ret)
       })
 
+      it('should be able to return bytes', async () => {
+        const ret = '0x1234123412341234'
+
+        mock.smocked.getBytes.will.return.with(ret)
+
+        expect(await mock.getBytes()).to.equal(ret)
+      })
+
       it('should be able to return a uint256', async () => {
         const ret = 1234
 
@@ -52,6 +60,26 @@ describe('smock', () => {
         mock.smocked.getSimpleStruct.will.return.with(ret)
 
         expect(_.toPlainObject(await mock.getSimpleStruct())).to.deep.include(
+          ret
+        )
+      })
+
+      it('should be able to return an array', async () => {
+        const ret = [BigNumber.from(1234), BigNumber.from(4321)]
+
+        mock.smocked.getUint256Array.will.return.with(ret)
+
+        expect(_.toPlainObject(await mock.getUint256Array())).to.deep.include(
+          ret
+        )
+      })
+
+      it('should be able to return a tuple', async () => {
+        const ret = [BigNumber.from(1234), BigNumber.from(4321)]
+
+        mock.smocked.getUint256Tuple.will.return.with(ret)
+
+        expect(_.toPlainObject(await mock.getUint256Tuple())).to.deep.include(
           ret
         )
       })
