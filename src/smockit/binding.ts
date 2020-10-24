@@ -90,7 +90,7 @@ const initSmock = (vm: any): void => {
   }
 
   const originalManagerErrorsFn =
-    bre.network.provider['_node' as any]['_manageErrors' as any]
+    bre.network.provider['_node' as any]['_manageErrors' as any].bind(bre.network.provider['_node' as any])
   bre.network.provider['_node' as any]['_manageErrors' as any] = async (
     vmResult: any,
     vmTrace: any,

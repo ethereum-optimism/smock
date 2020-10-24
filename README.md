@@ -92,7 +92,10 @@ import { smockit } from '@eth-optimism/smock'
 ```typescript
 const smockit = async (
   spec: ContractInterface | Contract | ContractFactory,
-  provider?: any
+  opts: {
+    provider?: any,
+    address?: string,
+  },
 ): Promise<MockContract>
 ```
 
