@@ -10,9 +10,9 @@ import { toHexString, fromHexString, makeRandomAddress } from '../utils'
 export const smockit = async (
   spec: ContractInterface | Contract | ContractFactory,
   opts: {
-    provider?: any,
-    address?: string,
-  } = {},
+    provider?: any
+    address?: string
+  } = {}
 ): Promise<MockContract> => {
   if (bre.network.name !== 'buidlerevm') {
     throw new Error('smockit currently only supports the buidlerevm.')
