@@ -23,14 +23,4 @@ export interface MockContractFunction {
   }
 }
 
-export interface MockContract extends Contract {
-  _smockit: (
-    data: Buffer
-  ) => {
-    resolve: 'return' | 'revert'
-    returnValue: Buffer
-  }
-  smocked: {
-    [functionName: string]: MockContractFunction
-  }
-}
+export type MockContract = any

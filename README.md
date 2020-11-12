@@ -32,7 +32,7 @@ Here's an example `buidler.config.ts` that shows how to import the plugin:
 
 ```typescript
 // buidler.config.ts
-import { usePlugin, BuidlerConfig } from '@nomiclabs/buidler/config'
+import { usePlugin, BuidlerConfig } from 'hardhat/config'
 
 usePlugin(...)
 usePlugin(...)
@@ -174,7 +174,7 @@ interface ModifiableContract extends Contract {
 
 ### Via `ethers.Contract`
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -190,7 +190,7 @@ console.log(await MyMockContract.myFunction()) // 'Some return value!'
 
 ### Asserting Call Count
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -212,7 +212,7 @@ console.log(MyMockContract.smocked.myFunction.calls.length) // 1
 
 ### Asserting Call Data
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -234,7 +234,7 @@ console.log(MyMockContract.smocked.myFunction.calls[0]) // 'Hello World!'
 
 ### Returning (w/o Data)
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -250,7 +250,7 @@ console.log(await MyMockContract.myFunction()) // []
 
 ### Returning a Struct
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -270,7 +270,7 @@ console.log(await MyMockContract.myFunction()) // ['Some value', 1234, true]
 
 ### Returning a Function
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -288,7 +288,7 @@ console.log(await MyMockContract.myFunction()) // ['Some return value!']
 
 ### Returning a Function (w/ Arguments)
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -306,7 +306,7 @@ console.log(await MyMockContract.myFunction('Some return value!')) // ['Some ret
 
 ### Reverting (w/o Data)
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -322,7 +322,7 @@ console.log(await MyMockContract.myFunction()) // Revert!
 
 ### Reverting (w/ Data)
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smockit } from '@eth-optimism/smock'
 
 const MyContractFactory = await ethers.getContractFactory('MyContract')
@@ -340,7 +340,7 @@ console.log(await MyMockContract.myFunction('Some return value!')) // Revert!
 
 ### Creating a Modifiable Contract
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smoddit } from '@eth-optimism/smock'
 
 // Smoddit!
@@ -350,7 +350,7 @@ const MyModifiableContract = await MyModifiableContractFactory.deploy(...)
 
 ### Modifying a `uint256`
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smoddit } from '@eth-optimism/smock'
 
 // Smoddit!
@@ -366,7 +366,7 @@ console.log(await MyMockContract.getMyInternalUint256()) // 1234
 
 ### Modifying a Struct
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smoddit } from '@eth-optimism/smock'
 
 // Smoddit!
@@ -385,7 +385,7 @@ console.log(await MyMockContract.getMyInternalStruct()) // { valueA: 1234, value
 
 ### Modifying a Mapping
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smoddit } from '@eth-optimism/smock'
 
 // Smoddit!
@@ -403,7 +403,7 @@ console.log(await MyMockContract.getMyInternalMappingValue(1234)) // 5678
 
 ### Modifying a Nested Mapping
 ```typescript
-import { ethers } from '@nomiclabs/buidler'
+import { ethers } from 'hardhat'
 import { smoddit } from '@eth-optimism/smock'
 
 // Smoddit!
