@@ -54,12 +54,24 @@ const initSmock = (vm: any): void => {
   })
 
   vm.on('afterMessage', async (result: any) => {
+    if (result && result.createdAddress) {
+      const created = toHexString(result.createdAddress).toLowerCase()
+      if (created in vm._smock.mocks) {
+        delete vm._smock.mocks[created]
+      }
+    }
+
     if (vm._smock.messages.length === 0) {
       return
     }
 
     const message = vm._smock.messages.pop()
     const target = toHexString(message.to).toLowerCase()
+
+    if (!(target in vm._smock.mocks)) {
+      return
+    }
+
     const mock: MockContract = vm._smock.mocks[target]
 
     const { resolve, returnValue } = mock._smockit(message.data)
