@@ -101,7 +101,10 @@ const initSmock = (vm: any): void => {
     }
   }
 
-  const provider = bre.network.provider['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]
+  const provider =
+    bre.network.provider['_wrapped' as any]['_wrapped' as any][
+      '_wrapped' as any
+    ]['_wrapped' as any]
   const buidlerNode = provider['_node' as any]
   const originalManagerErrorsFn = buidlerNode['_manageErrors' as any].bind(
     buidlerNode
@@ -123,7 +126,10 @@ const initSmock = (vm: any): void => {
 }
 
 export const bindSmock = (mock: MockContract): void => {
-  const provider = bre.network.provider['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]
+  const provider =
+    bre.network.provider['_wrapped' as any]['_wrapped' as any][
+      '_wrapped' as any
+    ]['_wrapped' as any]
   const vm = provider['_node' as any]['_vm' as any]
   initSmock(vm)
 

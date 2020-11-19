@@ -10,7 +10,7 @@ const config: HardhatUserConfig = {
   },
   solidity: {
     version: '0.7.0',
-  }
+  },
 }
 
 export default config

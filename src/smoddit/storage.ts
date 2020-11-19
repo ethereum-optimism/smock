@@ -26,8 +26,7 @@ interface StorageSlot {
  */
 export const getStorageLayout = async (name: string): Promise<any> => {
   const artifacts = new Artifacts(bre.config.paths.artifacts)
-  return (artifacts.readArtifactSync(name) as any)
-    .storageLayout
+  return (artifacts.readArtifactSync(name) as any).storageLayout
 }
 
 /**

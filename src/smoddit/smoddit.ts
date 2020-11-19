@@ -23,9 +23,11 @@ export const smoddit = async (
   )) as ModifiableContractFactory
   const layout = await getStorageLayout(name)
 
-  const provider = bre.network.provider['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]
-  const pStateManager =
-    provider['_node' as any]['_vm' as any].pStateManager
+  const provider =
+    bre.network.provider['_wrapped' as any]['_wrapped' as any][
+      '_wrapped' as any
+    ]['_wrapped' as any]
+  const pStateManager = provider['_node' as any]['_vm' as any].pStateManager
   const originalDeployFn = factory.deploy.bind(factory)
   factory.deploy = async (...args: any[]): Promise<ModifiableContract> => {
     const contract: ModifiableContract = await originalDeployFn(...args)

@@ -13,8 +13,11 @@ export const smockit = async (
     provider?: any
     address?: string
   } = {}
-): Promise<any>  => {
-  const provider = bre.network.provider['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]
+): Promise<any> => {
+  const provider =
+    bre.network.provider['_wrapped' as any]['_wrapped' as any][
+      '_wrapped' as any
+    ]['_wrapped' as any]
   if (!provider['_node' as any]) {
     await provider['_init' as any]()
   }
