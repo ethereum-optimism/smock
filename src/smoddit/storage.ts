@@ -1,6 +1,6 @@
 /* External Imports */
-import bre from '@nomiclabs/buidler'
-import { readArtifact } from '@nomiclabs/buidler/internal/artifacts'
+import bre from 'hardhat'
+import { Artifacts } from 'hardhat/internal/artifacts'
 import { BigNumber } from 'ethers'
 import { keccak256 } from 'ethers/lib/utils'
 import _ from 'lodash'
@@ -25,7 +25,8 @@ interface StorageSlot {
  * @return Storage layout for the given contract name.
  */
 export const getStorageLayout = async (name: string): Promise<any> => {
-  return ((await readArtifact(bre.config.paths.artifacts, name)) as any)
+  const artifacts = new Artifacts(bre.config.paths.artifacts)
+  return (artifacts.readArtifactSync(name) as any)
     .storageLayout
 }
 

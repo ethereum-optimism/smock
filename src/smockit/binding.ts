@@ -1,6 +1,6 @@
 /* Imports: External */
-import bre from '@nomiclabs/buidler'
-import { TransactionExecutionError } from '@nomiclabs/buidler/internal/buidler-evm/provider/errors'
+import bre from 'hardhat'
+import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
 
 /* Imports: Internal */
 import { MockContract } from './types'
@@ -101,7 +101,8 @@ const initSmock = (vm: any): void => {
     }
   }
 
-  const buidlerNode = bre.network.provider['_node' as any]
+  const provider = bre.network.provider['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]
+  const buidlerNode = provider['_node' as any]
   const originalManagerErrorsFn = buidlerNode['_manageErrors' as any].bind(
     buidlerNode
   )
@@ -122,7 +123,8 @@ const initSmock = (vm: any): void => {
 }
 
 export const bindSmock = (mock: MockContract): void => {
-  const vm = bre.network.provider['_node' as any]['_vm' as any]
+  const provider = bre.network.provider['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]['_wrapped' as any]
+  const vm = provider['_node' as any]['_vm' as any]
   initSmock(vm)
 
   vm._smock.mocks[mock.address.toLowerCase()] = mock
