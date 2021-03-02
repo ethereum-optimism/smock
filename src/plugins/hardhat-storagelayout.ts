@@ -6,9 +6,11 @@ subtask(
   TASK_COMPILE_SOLIDITY_GET_COMPILATION_JOB_FOR_FILE,
   async (_, __, runSuper) => {
     const compilationJob = await runSuper()
-    compilationJob.solidityConfig.settings.outputSelection['*']['*'].push(
-      'storageLayout'
-    )
+    if (compilationJob.solidityConfig) {
+      compilationJob.solidityConfig.settings.outputSelection['*']['*'].push(
+        'storageLayout'
+      )
+    }
     return compilationJob
   }
 )
