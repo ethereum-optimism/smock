@@ -1,0 +1,41 @@
+name: CI - service-base
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    name: Run smock Check Suite on Node ${{matrix.node}}
+    runs-on: ubuntu-latest
+    
+    strategy:
+      matrix:
+        node: ['10', '12', '14']
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Setup node ${{ matrix.node }}
+        uses: actions/setup-node@v1
+        with:
+          node-version: ${{ matrix.node }}
+
+      # START DEPENDENCY CACHING
+      - name: Cache deps
+        uses: actions/cache@v1
+        id: cache_smock
+        with:
+          path: node_modules
+          key: ${{ runner.os }}-${{ matrix.node }}-${{ hashFiles('package.json') }}
+      # END DEPENDENCY CACHING
+      
+      - name: Install Dependencies
+        run: yarn install
+
+      - name: Build
+        run: |
+          yarn clean
+          yarn build
