@@ -183,7 +183,7 @@ const MyContract = await MyContractFactory.deploy(...)
 // Smockit!
 const MyMockContract = await smockit(MyContract)
 
-MyMockContract.myFunction.will.return.with('Some return value!')
+MyMockContract.smocked.myFunction.will.return.with('Some return value!')
 
 console.log(await MyMockContract.myFunction()) // 'Some return value!'
 ```
