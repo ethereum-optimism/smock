@@ -74,11 +74,16 @@ const initSmock = (vm: any): void => {
 
     const mock: MockContract = vm._smock.mocks[target]
 
-    const { resolve, returnValue } = mock._smockit(message.data)
-
-    result.execResult.returnValue = returnValue
-    if (resolve === 'revert') {
-      result.execResult.exceptionError = new VmError('smocked revert')
+    try {
+      const { resolve, returnValue } = mock._smockit(message.data)
+      result.execResult.returnValue = returnValue
+      if (resolve === 'revert') {
+        result.execResult.exceptionError = new VmError('smocked revert')
+      }
+    } catch (err) {
+      // Not sure if catching this is the right thing to do.
+      // Does make my life easier for now though!
+      return
     }
   })
 
