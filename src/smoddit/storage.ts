@@ -26,7 +26,15 @@ interface StorageSlot {
  */
 export const getStorageLayout = async (name: string): Promise<any> => {
   const artifacts = new Artifacts(bre.config.paths.artifacts)
-  return (artifacts.readArtifactSync(name) as any).storageLayout
+  const storageLayout = (artifacts.readArtifactSync(name) as any).storageLayout
+
+  if (!storageLayout) {
+    throw new Error(
+      `Storage layout for ${name} not found. Did you forget to use compiler-storage-layout plugin? Read more: https://github.com/ethereum-optimism/smock#note-on-using-smoddit`
+    )
+  }
+
+  return storageLayout
 }
 
 /**
