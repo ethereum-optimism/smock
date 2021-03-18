@@ -1,19 +1,16 @@
 /* Imports: External */
 import bre from 'hardhat'
-import { Contract, ContractFactory, ContractInterface, ethers } from 'ethers'
+import { ContractInterface, ethers } from 'ethers'
 
 /* Imports: Internal */
-import { MockContract, MockReturnValue } from './types'
+import { MockContract, MockReturnValue, SmockOptions, SmockSpec } from './types'
 import { bindSmock } from './binding'
 import { toHexString, fromHexString, makeRandomAddress } from '../utils'
 
 export const smockit = async (
-  spec: ContractInterface | Contract | ContractFactory | any,
-  opts: {
-    provider?: any
-    address?: string
-  } = {}
-): Promise<any> => {
+  spec: SmockSpec,
+  opts: SmockOptions = {}
+): Promise<MockContract> => {
   const provider =
     bre.network.provider['_wrapped' as any]['_wrapped' as any][
       '_wrapped' as any
@@ -91,7 +88,8 @@ export const smockit = async (
     }
   }
 
-  contract._smockit = function (
+  // TODO: Make this less of a hack.
+  ;(contract as any)._smockit = function (
     data: Buffer
   ): {
     resolve: 'return' | 'revert'

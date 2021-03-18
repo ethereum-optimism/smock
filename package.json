@@ -6,8 +6,10 @@
   "scripts": {
     "build": "tsc -p .",
     "test": "hardhat test --show-stack-traces",
-    "lint": "tslint --format stylish --project .",
-    "lint:fix": "prettier --config ./prettier-config.json --write \"hardhat.config.ts\" \"{src,test}/**/*.ts\""
+    "lint": "yarn lint:fix && yarn lint:check",
+    "lint:check": "tslint --format stylish --project .",
+    "lint:fix": "prettier --config ./prettier-config.json --write \"hardhat.config.ts\" \"{src,test}/**/*.ts\"",
+    "clean": "rimraf ./artifacts ./cache ./build"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",

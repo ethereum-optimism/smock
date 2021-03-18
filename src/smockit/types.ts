@@ -1,5 +1,17 @@
 /* Imports: External */
-import { Contract } from 'ethers'
+import { Contract, ContractFactory, ContractInterface } from 'ethers'
+
+export type SmockSpec =
+  | ContractInterface
+  | Contract
+  | ContractFactory
+  | string
+  | any
+
+export interface SmockOptions {
+  provider?: any // What's the right type for a generic ethers provider?
+  address?: string
+}
 
 export type MockReturnValue =
   | string
@@ -23,4 +35,8 @@ export interface MockContractFunction {
   }
 }
 
-export type MockContract = any
+export type MockContract = Contract & {
+  smocked: {
+    [name: string]: MockContractFunction
+  }
+}

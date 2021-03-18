@@ -1,6 +1,7 @@
+import { expect } from '../setup'
+
 /* Imports: External */
 import { ethers } from 'hardhat'
-import { expect } from 'chai'
 import { BigNumber, Contract } from 'ethers'
 import _ from 'lodash'
 
@@ -59,9 +60,9 @@ describe('smock', () => {
 
         mock.smocked.getSimpleStruct.will.return.with(ret)
 
-        expect(_.toPlainObject(await mock.getSimpleStruct())).to.deep.include(
-          ret
-        )
+        const result = _.toPlainObject(await mock.getSimpleStruct())
+        expect(result.valueA).to.deep.equal(ret.valueA)
+        expect(result.valueB).to.deep.equal(ret.valueB)
       })
 
       it('should be able to return an array', async () => {
@@ -69,9 +70,9 @@ describe('smock', () => {
 
         mock.smocked.getUint256Array.will.return.with(ret)
 
-        expect(_.toPlainObject(await mock.getUint256Array())).to.deep.include(
-          ret
-        )
+        const result = _.toPlainObject(await mock.getUint256Array())
+        expect(result[0]).to.deep.equal(ret[0])
+        expect(result[1]).to.deep.equal(ret[1])
       })
 
       it('should be able to return a tuple', async () => {
@@ -79,9 +80,9 @@ describe('smock', () => {
 
         mock.smocked.getUint256Tuple.will.return.with(ret)
 
-        expect(_.toPlainObject(await mock.getUint256Tuple())).to.deep.include(
-          ret
-        )
+        const result = _.toPlainObject(await mock.getUint256Tuple())
+        expect(result[0]).to.deep.equal(ret[0])
+        expect(result[1]).to.deep.equal(ret[1])
       })
 
       it('should be able to do reverts', async () => {
