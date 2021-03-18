@@ -1,5 +1,5 @@
 /* External Imports */
-import bre from 'hardhat'
+import hre from 'hardhat'
 import { Artifacts } from 'hardhat/internal/artifacts'
 import { BigNumber } from 'ethers'
 import { keccak256 } from 'ethers/lib/utils'
@@ -25,16 +25,20 @@ interface StorageSlot {
  * @return Storage layout for the given contract name.
  */
 export const getStorageLayout = async (name: string): Promise<any> => {
-  const artifacts = new Artifacts(bre.config.paths.artifacts)
-  const storageLayout = (artifacts.readArtifactSync(name) as any).storageLayout
+  const artifacts = new Artifacts(hre.config.paths.artifacts)
+  const { sourceName, contractName } = artifacts.readArtifactSync(name)
+  const buildInfo = await hre.artifacts.getBuildInfo(
+    `${sourceName}:${contractName}`
+  )
+  const output = buildInfo.output.contracts[sourceName][contractName]
 
-  if (!storageLayout) {
+  if (!('storageLayout' in output)) {
     throw new Error(
-      `Storage layout for ${name} not found. Did you forget to use compiler-storage-layout plugin? Read more: https://github.com/ethereum-optimism/smock#note-on-using-smoddit`
+      `Storage layout for ${name} not found. Did you forget to set the storage layout compiler option in your hardhat config? Read more: https://github.com/ethereum-optimism/smock#note-on-using-smoddit`
     )
   }
 
-  return storageLayout
+  return (output as any).storageLayout
 }
 
 /**

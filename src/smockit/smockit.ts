@@ -42,7 +42,9 @@ export const smockit = async (
             let data: any = toHexString(calldataBuf)
             try {
               data = contract.interface.decodeFunctionData(fragment.name, data)
-            } catch {}
+            } catch (e) {
+              console.error(e)
+            }
 
             return {
               functionName: fragment.name,
