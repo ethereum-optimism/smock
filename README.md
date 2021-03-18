@@ -26,17 +26,26 @@ yarn add @eth-optimism/smock
 
 ## Note on Using `smoddit`
 
-`smoddit` requires access to the internal storage layout of your smart contracts. The Solidity compiler exposes this via the `storageLayout` flag, but `hardhat` does not enable this flag by default (and doesn't provide an easy way to do so). When using `smoddit` with `hardhat`, you must therefore (for now) also import our `compiler-storage-layout` plugin within your `hardhat.config.ts`. `smoddit` **will not work** without this plugin until support for custom compiler flags is added to `hardhat`.
+`smoddit` requires access to the internal storage layout of your smart contracts. The Solidity compiler exposes this via the `storageLayout` flag, which you need to enable at your hardhat config.
 
 Here's an example `hardhat.config.ts` that shows how to import the plugin:
 
 ```typescript
 // hardhat.config.ts
 import { HardhatUserConfig } from 'hardhat/config'
-import '@eth-optimism/smock/build/src/plugins/hardhat-storagelayout';
 
 const config: HardhatUserConfig = {
-  ...
+  ...,
+  solidity: {
+    version: '0.7.0',
+    settings: {
+      outputSelection: {
+        "*": {
+            "*": ["storageLayout"],
+        },
+      },
+    }
+  },
 }
 
 export default config
