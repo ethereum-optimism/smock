@@ -31,6 +31,13 @@ export const getStorageLayout = async (name: string): Promise<any> => {
     `${sourceName}:${contractName}`
   )
   const output = buildInfo.output.contracts[sourceName][contractName]
+
+  if (!('storageLayout' in output)) {
+    throw new Error(
+      `Storage layout for ${name} not found. Did you forget to set the storage layout compiler option in your hardhat config? Read more: https://github.com/ethereum-optimism/smock#note-on-using-smoddit`
+    )
+  }
+
   return (output as any).storageLayout
 }
 
