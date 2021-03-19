@@ -141,7 +141,7 @@ export const smockit = async (
     }
   }
 
-  bindSmock(contract)
+  bindSmock(contract, provider)
 
   return contract
 }

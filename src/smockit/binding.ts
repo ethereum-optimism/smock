@@ -1,27 +1,24 @@
 /* Imports: External */
 import bre from 'hardhat'
 import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
+import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
 /* Imports: Internal */
-import { MockContract } from './types'
+import { MockContract, VmError } from './types'
 import { toHexString } from '../utils'
 
-class VmError {
-  error: string
-  errorType: string
-
-  constructor(error: string) {
-    this.error = error
-    this.errorType = 'VmError'
-  }
+const isSmockInitialized = (provider: any): boolean => {
+  return (provider as any)._node._vm._smockState !== undefined
 }
 
-const initSmock = (vm: any): void => {
-  if (vm._smock) {
+const initializeSmock = (provider: HardhatNetworkProvider): void => {
+  if (isSmockInitialized(provider)) {
     return
   }
 
-  vm._smock = {
+  const vm = (provider as any)._node._vm
+
+  vm._smockState = {
     mocks: {},
     calls: {},
     messages: [],
@@ -29,7 +26,7 @@ const initSmock = (vm: any): void => {
   }
 
   vm.on('beforeTx', () => {
-    vm._smock.calls = {}
+    vm._smockState.calls = {}
   })
 
   vm.on('beforeMessage', (message: any) => {
@@ -38,41 +35,41 @@ const initSmock = (vm: any): void => {
     }
 
     const target = toHexString(message.to).toLowerCase()
-    if (!(target in vm._smock.mocks)) {
+    if (!(target in vm._smockState.mocks)) {
       return
     }
 
-    if (!(target in vm._smock.calls)) {
-      vm._smock.calls[target] = []
+    if (!(target in vm._smockState.calls)) {
+      vm._smockState.calls[target] = []
     }
 
-    vm._smock.calls[target].push(message.data)
-    vm._smock.messages.push(message)
+    vm._smockState.calls[target].push(message.data)
+    vm._smockState.messages.push(message)
 
     // Return the real (empty) while in the message context.
-    vm._smock.shouldReturnCode = true
+    vm._smockState.shouldReturnCode = true
   })
 
   vm.on('afterMessage', async (result: any) => {
     if (result && result.createdAddress) {
       const created = toHexString(result.createdAddress).toLowerCase()
-      if (created in vm._smock.mocks) {
-        delete vm._smock.mocks[created]
+      if (created in vm._smockState.mocks) {
+        delete vm._smockState.mocks[created]
       }
     }
 
-    if (vm._smock.messages.length === 0) {
+    if (vm._smockState.messages.length === 0) {
       return
     }
 
-    const message = vm._smock.messages.pop()
+    const message = vm._smockState.messages.pop()
     const target = toHexString(message.to).toLowerCase()
 
-    if (!(target in vm._smock.mocks)) {
+    if (!(target in vm._smockState.mocks)) {
       return
     }
 
-    const mock: MockContract = vm._smock.mocks[target]
+    const mock: MockContract = vm._smockState.mocks[target]
 
     const { resolve, returnValue } = mock._smockit(message.data)
 
@@ -84,7 +81,7 @@ const initSmock = (vm: any): void => {
 
   vm.on('step', () => {
     // Return the fake (non-empty) while in the interpreter context.
-    vm._smock.shouldReturnCode = false
+    vm._smockState.shouldReturnCode = false
   })
 
   const originalGetContractCodeFn = vm.pStateManager.getContractCode.bind(
@@ -94,17 +91,16 @@ const initSmock = (vm: any): void => {
     addressBuf: Buffer
   ): Promise<Buffer> => {
     const address = toHexString(addressBuf).toLowerCase()
-    if (address in vm._smock.mocks && vm._smock.shouldReturnCode === false) {
+    if (
+      address in vm._smockState.mocks &&
+      vm._smockState.shouldReturnCode === false
+    ) {
       return Buffer.from('F3', 'hex')
     } else {
       return originalGetContractCodeFn(addressBuf)
     }
   }
 
-  const provider =
-    bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
-    ]['_wrapped' as any]
   const buidlerNode = provider['_node' as any]
   const originalManagerErrorsFn = buidlerNode['_manageErrors' as any].bind(
     buidlerNode
@@ -125,13 +121,14 @@ const initSmock = (vm: any): void => {
   }
 }
 
-export const bindSmock = (mock: MockContract): void => {
-  const provider =
-    bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
-    ]['_wrapped' as any]
-  const vm = provider['_node' as any]['_vm' as any]
-  initSmock(vm)
+export const bindSmock = (
+  mock: MockContract,
+  provider: HardhatNetworkProvider
+): void => {
+  if (!isSmockInitialized(provider)) {
+    initializeSmock(provider)
+  }
 
-  vm._smock.mocks[mock.address.toLowerCase()] = mock
+  const vm = (provider as any)._node._vm
+  vm._smockState.mocks[mock.address.toLowerCase()] = mock
 }
