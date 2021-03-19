@@ -1,32 +1,110 @@
 /* Imports: External */
-import bre from 'hardhat'
-import { ContractInterface, ethers } from 'ethers'
+import hre from 'hardhat'
+import { Contract, ContractFactory, ethers } from 'ethers'
+import { HardhatRuntimeEnvironment } from 'hardhat/types'
+import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
 /* Imports: Internal */
 import { MockContract, MockReturnValue, SmockOptions, SmockSpec } from './types'
 import { bindSmock } from './binding'
 import { toHexString, fromHexString, makeRandomAddress } from '../utils'
 
+/**
+ * Finds the "base" Ethereum provider of the current hardhat environment.
+ *
+ * Basically, hardhat uses a system of nested providers where each provider wraps the next and
+ * "provides" some extra features. When you're running on top of the "hardhat evm" the bottom of
+ * this series of providers is the "HardhatNetworkProvider":
+ * https://github.com/nomiclabs/hardhat/blob/master/packages/hardhat-core/src/internal/hardhat-network/provider/provider.ts
+ * This object has direct access to the node (provider._node), which in turn has direct access to
+ * the ethereumjs-vm instance (provider._node._vm). So it's quite useful to be able to find this
+ * object reliably!
+ * @param hre hardhat runtime environment to pull the base provider from.
+ * @return base hardhat network provider
+ */
+const findBaseHardhatProvider = (
+  hre: HardhatRuntimeEnvironment
+): HardhatNetworkProvider => {
+  // This function is pretty approximate. Haven't spent enough time figuring out if there's a more
+  // reliable way to get the base provider. I can imagine a future in which there's some circular
+  // references and this function ends up looping. So I'll just preempt this by capping the maximum
+  // search depth.
+  const maxLoopIterations = 1024
+  let currentLoopIterations = 0
+
+  // Search by looking for the internal "_wrapped" variable. Base provider doesn't have this
+  // property (at least for now!).
+  let provider = hre.network.provider
+  while ((provider as any)._wrapped !== undefined) {
+    provider = (provider as any)._wrapped
+
+    // Just throw if we ever end up in (what seems to be) an infinite loop.
+    currentLoopIterations += 1
+    if (currentLoopIterations > maxLoopIterations) {
+      throw new Error(
+        `[smock]: unable to find base hardhat provider. are you sure you're running locally?`
+      )
+    }
+  }
+
+  // TODO: Figure out a reliable way to do a type check here. Source for inspiration:
+  // https://github.com/nomiclabs/hardhat/blob/master/packages/hardhat-core/src/internal/hardhat-network/provider/provider.ts
+  return provider as any
+}
+
+/**
+ * Generates an ethers Interface instance when given a smock spec. Meant for standardizing the
+ * various input types we might reasonably want to support.
+ * @param spec Smock specification object. Thing you want to base the interface on.
+ * @return Interface generated from the spec.
+ */
+const makeContractInterfaceFromSpec = (
+  spec: SmockSpec
+): ethers.utils.Interface => {
+  if (spec instanceof Contract) {
+    return spec.interface
+  } else if (spec instanceof ContractFactory) {
+    return spec.interface
+  } else if (spec instanceof ethers.utils.Interface) {
+    return spec
+  } else {
+    return new ethers.utils.Interface(spec)
+  }
+}
+
 export const smockit = async (
   spec: SmockSpec,
   opts: SmockOptions = {}
 ): Promise<MockContract> => {
-  const provider =
-    bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
-    ]['_wrapped' as any]
-  if (!provider['_node' as any]) {
-    await provider['_init' as any]()
+  // Only support native hardhat runtime, haven't bothered to figure it out for anything else.
+  if (hre.network.name !== 'hardhat') {
+    throw new Error(
+      `[smock]: smock is only compatible with the "hardhat" network, got: ${hre.network.name}`
+    )
   }
 
-  const iface: ContractInterface = (spec as any).interface || spec
+  // Find the provider object. See comments for `getBaseHardhatProvider`
+  const provider = findBaseHardhatProvider(hre)
+
+  // Sometimes the VM hasn't been initialized by the time we get here, depending on what the user
+  // is doing with hardhat (e.g., sending a transaction before calling this function will
+  // initialize the vm). Initialize it here if it hasn't been already.
+  if ((provider as any)._node === undefined) {
+    await (provider as any)._init()
+  }
+
+  // Generate the contract object that we're going to attach our fancy functions to. Doing it this
+  // way is nice because it "feels" more like a contract (as long as you're using ethers).
   const contract = new ethers.Contract(
     opts.address || makeRandomAddress(),
-    iface,
-    opts.provider || (spec as any).provider
+    makeContractInterfaceFromSpec(spec),
+    opts.provider || hre.ethers.provider // TODO: Probably check that this exists.
   ) as MockContract
 
-  const vm = provider['_node' as any]['_vm' as any]
+  // Pull out a reference to the VM. Shouldn't change during the course of execution. Might though.
+  // Haven't thought about it enough.
+  const vm: any = (provider as any)._node._vm
+
   contract.smocked = {}
   for (const functionName of Object.keys(contract.functions)) {
     contract.smocked[functionName] = {
