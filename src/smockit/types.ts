@@ -8,7 +8,7 @@ export type SmockSpec =
   | Contract
   | ContractFactory
   | string
-  | Array<JsonFragment | Fragment | string>
+  | (JsonFragment | Fragment | string)[]
 
 export interface SmockOptions {
   provider?: Provider
