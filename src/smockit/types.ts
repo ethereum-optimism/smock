@@ -1,15 +1,17 @@
 /* Imports: External */
 import { Contract, ContractFactory, ContractInterface } from 'ethers'
+import { Provider } from '@ethersproject/abstract-provider'
+import { JsonFragment, Fragment } from '@ethersproject/abi'
 
 export type SmockSpec =
   | ContractInterface
   | Contract
   | ContractFactory
   | string
-  | any
+  | Array<JsonFragment | Fragment | string>
 
 export interface SmockOptions {
-  provider?: any // What's the right type for a generic ethers provider?
+  provider?: Provider
   address?: string
 }
 
