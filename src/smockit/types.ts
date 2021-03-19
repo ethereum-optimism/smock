@@ -1,12 +1,12 @@
 /* Imports: External */
-import { Contract, ContractFactory, ContractInterface } from 'ethers'
+import { Contract, ContractFactory, ethers } from 'ethers'
 import { Provider } from '@ethersproject/abstract-provider'
 import { JsonFragment, Fragment } from '@ethersproject/abi'
 
 export type SmockSpec =
-  | ContractInterface
   | Contract
   | ContractFactory
+  | ethers.utils.Interface
   | string
   | (JsonFragment | Fragment | string)[]
 
