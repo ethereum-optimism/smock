@@ -23,7 +23,7 @@ import { toHexString, fromHexString, makeRandomAddress } from '../utils'
  * @return base hardhat network provider
  */
 const findBaseHardhatProvider = (
-  hre: HardhatRuntimeEnvironment
+  runtime: HardhatRuntimeEnvironment
 ): HardhatNetworkProvider => {
   // This function is pretty approximate. Haven't spent enough time figuring out if there's a more
   // reliable way to get the base provider. I can imagine a future in which there's some circular
