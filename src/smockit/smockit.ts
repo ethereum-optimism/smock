@@ -34,7 +34,7 @@ const findBaseHardhatProvider = (
 
   // Search by looking for the internal "_wrapped" variable. Base provider doesn't have this
   // property (at least for now!).
-  let provider = hre.network.provider
+  let provider = runtime.network.provider
   while ((provider as any)._wrapped !== undefined) {
     provider = (provider as any)._wrapped
 
