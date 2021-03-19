@@ -1,5 +1,19 @@
 /* Imports: External */
-import { Contract } from 'ethers'
+import { Contract, ContractFactory, ContractInterface } from 'ethers'
+import { Provider } from '@ethersproject/abstract-provider'
+import { JsonFragment, Fragment } from '@ethersproject/abi'
+
+export type SmockSpec =
+  | ContractInterface
+  | Contract
+  | ContractFactory
+  | string
+  | (JsonFragment | Fragment | string)[]
+
+export interface SmockOptions {
+  provider?: Provider
+  address?: string
+}
 
 export type MockReturnValue =
   | string
@@ -23,4 +37,8 @@ export interface MockContractFunction {
   }
 }
 
-export type MockContract = any
+export type MockContract = Contract & {
+  smocked: {
+    [name: string]: MockContractFunction
+  }
+}

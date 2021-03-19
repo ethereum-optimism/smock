@@ -54,9 +54,9 @@ describe('smoddit', () => {
           _SimpleStruct: ret,
         })
 
-        expect(_.toPlainObject(await smod.getSimpleStruct())).to.deep.include(
-          ret
-        )
+        const result = _.toPlainObject(await smod.getSimpleStruct())
+        expect(result.valueA).to.deep.equal(ret.valueA)
+        expect(result.valueB).to.deep.equal(ret.valueB)
       })
 
       it('should be able to return a simple uint256 => uint256 mapping value', async () => {
