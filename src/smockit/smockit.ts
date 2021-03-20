@@ -1,6 +1,6 @@
 /* Imports: External */
 import hre from 'hardhat'
-import { Contract, ContractFactory, ContractFunction, ethers } from 'ethers'
+import { Contract, ContractFactory, ethers } from 'ethers'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
@@ -9,6 +9,7 @@ import {
   MockContract,
   MockContractFunction,
   MockReturnValue,
+  SmockedVM,
   SmockOptions,
   SmockSpec,
 } from './types'
@@ -88,7 +89,7 @@ const makeContractInterfaceFromSpec = (
 const smockifyFunction = (
   contract: Contract,
   functionName: string,
-  vm: any
+  vm: SmockedVM
 ): MockContractFunction => {
   return {
     get calls() {
