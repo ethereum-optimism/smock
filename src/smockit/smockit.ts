@@ -1,11 +1,17 @@
 /* Imports: External */
 import hre from 'hardhat'
-import { Contract, ContractFactory, ethers } from 'ethers'
+import { Contract, ContractFactory, ContractFunction, ethers } from 'ethers'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
 /* Imports: Internal */
-import { MockContract, MockReturnValue, SmockOptions, SmockSpec } from './types'
+import {
+  MockContract,
+  MockContractFunction,
+  MockReturnValue,
+  SmockOptions,
+  SmockSpec,
+} from './types'
 import { bindSmock } from './binding'
 import { toHexString, fromHexString, makeRandomAddress } from '../utils'
 
@@ -72,6 +78,81 @@ const makeContractInterfaceFromSpec = (
   }
 }
 
+/**
+ * Creates a mock contract function from a real contract function.
+ * @param contract Contract object to make a mock function for.
+ * @param functionName Name of the function to mock.
+ * @param vm Virtual machine reference, necessary for call assertions to work.
+ * @return Mock contract function.
+ */
+const smockifyFunction = (
+  contract: Contract,
+  functionName: string,
+  vm: any
+): MockContractFunction => {
+  return {
+    get calls() {
+      return vm._smockState.calls[contract.address.toLowerCase()]
+        .map((calldataBuf: Buffer) => {
+          const sighash = toHexString(calldataBuf.slice(0, 4))
+          const fragment = contract.interface.getFunction(sighash)
+
+          let data: any = toHexString(calldataBuf)
+          try {
+            data = contract.interface.decodeFunctionData(fragment.name, data)
+          } catch (e) {
+            console.error(e)
+          }
+
+          return {
+            functionName: fragment.name,
+            data,
+          }
+        })
+        .filter((functionResult: any) => {
+          return functionResult.functionName === functionName
+        })
+        .map((functionResult: any) => {
+          return functionResult.data
+        })
+    },
+    will: {
+      get return() {
+        const fn: any = () => {
+          this.resolve = 'return'
+          this.returnValue = undefined
+        }
+
+        fn.with = (returnValue?: MockReturnValue): void => {
+          this.resolve = 'return'
+          this.returnValue = returnValue
+        }
+
+        return fn
+      },
+      get revert() {
+        const fn: any = () => {
+          this.resolve = 'revert'
+          this.returnValue = undefined
+        }
+
+        fn.with = (revertValue?: string): void => {
+          this.resolve = 'revert'
+          this.returnValue = revertValue
+        }
+
+        return fn
+      },
+      resolve: 'return',
+    },
+  }
+}
+
+/**
+ * Turns a specification into a mock contract.
+ * @param spec Smock contract specification.
+ * @param opts Optional additional settings.
+ */
 export const smockit = async (
   spec: SmockSpec,
   opts: SmockOptions = {}
@@ -101,69 +182,14 @@ export const smockit = async (
     opts.provider || hre.ethers.provider // TODO: Probably check that this exists.
   ) as MockContract
 
-  // Pull out a reference to the VM. Shouldn't change during the course of execution. Might though.
-  // Haven't thought about it enough.
-  const vm: any = (provider as any)._node._vm
-
+  // Smock all of the contract functions.
   contract.smocked = {}
   for (const functionName of Object.keys(contract.functions)) {
-    contract.smocked[functionName] = {
-      get calls() {
-        return vm._smock.calls[contract.address.toLowerCase()]
-          .map((calldataBuf: Buffer) => {
-            const sighash = toHexString(calldataBuf.slice(0, 4))
-            const fragment = contract.interface.getFunction(sighash)
-
-            let data: any = toHexString(calldataBuf)
-            try {
-              data = contract.interface.decodeFunctionData(fragment.name, data)
-            } catch (e) {
-              console.error(e)
-            }
-
-            return {
-              functionName: fragment.name,
-              data,
-            }
-          })
-          .filter((functionResult: any) => {
-            return functionResult.functionName === functionName
-          })
-          .map((functionResult: any) => {
-            return functionResult.data
-          })
-      },
-
-      will: {
-        get return() {
-          const fn: any = () => {
-            this.resolve = 'return'
-            this.returnValue = undefined
-          }
-
-          fn.with = (returnValue?: MockReturnValue): void => {
-            this.resolve = 'return'
-            this.returnValue = returnValue
-          }
-
-          return fn
-        },
-        get revert() {
-          const fn: any = () => {
-            this.resolve = 'revert'
-            this.returnValue = undefined
-          }
-
-          fn.with = (revertValue?: string): void => {
-            this.resolve = 'revert'
-            this.returnValue = revertValue
-          }
-
-          return fn
-        },
-        resolve: 'return',
-      },
-    }
+    contract.smocked[functionName] = smockifyFunction(
+      contract,
+      functionName,
+      (provider as any)._node._vm
+    )
   }
 
   // TODO: Make this less of a hack.
