@@ -4,7 +4,7 @@ import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provide
 
 /* Imports: Internal */
 import { MockContract, VmError } from './types'
-import { toHexString } from '../utils'
+import { toHexString } from '@eth-optimism/core-utils'
 
 /**
  * Checks to see if smock has been initialized already. Basically just checking to see if we've

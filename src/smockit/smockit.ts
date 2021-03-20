@@ -13,7 +13,8 @@ import {
   SmockSpec,
 } from './types'
 import { bindSmock } from './binding'
-import { toHexString, fromHexString, makeRandomAddress } from '../utils'
+import { toHexString, fromHexString } from '@eth-optimism/core-utils'
+import { makeRandomAddress } from '../utils'
 
 /**
  * Finds the "base" Ethereum provider of the current hardhat environment.
@@ -160,7 +161,7 @@ export const smockit = async (
   // Only support native hardhat runtime, haven't bothered to figure it out for anything else.
   if (hre.network.name !== 'hardhat') {
     throw new Error(
-      `[smock]: smock is only compatible with the "hardhat" network, got: ${hre.network.name}`
+      `[smock]: smock is only compatible with the "hardhat" network, got: ${ hre.network.name }`
     )
   }
 
@@ -193,7 +194,7 @@ export const smockit = async (
   }
 
   // TODO: Make this less of a hack.
-  ;(contract as any)._smockit = function (
+  ; (contract as any)._smockit = function (
     data: Buffer
   ): {
     resolve: 'return' | 'revert'
@@ -227,7 +228,7 @@ export const smockit = async (
           } catch {
             if (typeof rawReturnValue !== 'string') {
               throw new Error(
-                `Could not properly encode mock return value for ${fn.name}`
+                `Could not properly encode mock return value for ${ fn.name }`
               )
             }
 
