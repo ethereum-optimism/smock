@@ -3,6 +3,7 @@ import hre from 'hardhat'
 import { Contract, ContractFactory, ContractFunction, ethers } from 'ethers'
 import { HardhatRuntimeEnvironment } from 'hardhat/types'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
+import { toHexString, fromHexString } from '@eth-optimism/core-utils'
 
 /* Imports: Internal */
 import {
@@ -13,7 +14,6 @@ import {
   SmockSpec,
 } from './types'
 import { bindSmock } from './binding'
-import { toHexString, fromHexString } from '@eth-optimism/core-utils'
 import { makeRandomAddress } from '../utils'
 
 /**
@@ -161,7 +161,7 @@ export const smockit = async (
   // Only support native hardhat runtime, haven't bothered to figure it out for anything else.
   if (hre.network.name !== 'hardhat') {
     throw new Error(
-      `[smock]: smock is only compatible with the "hardhat" network, got: ${hre.network.name}`
+      `[smock]: smock is only compatible with the "hardhat" network, got: ${ hre.network.name }`
     )
   }
 
@@ -194,7 +194,7 @@ export const smockit = async (
   }
 
   // TODO: Make this less of a hack.
-  ;(contract as any)._smockit = function (
+  ; (contract as any)._smockit = function (
     data: Buffer
   ): {
     resolve: 'return' | 'revert'
@@ -228,7 +228,7 @@ export const smockit = async (
           } catch {
             if (typeof rawReturnValue !== 'string') {
               throw new Error(
-                `Could not properly encode mock return value for ${fn.name}`
+                `Could not properly encode mock return value for ${ fn.name }`
               )
             }
 

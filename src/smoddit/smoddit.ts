@@ -1,11 +1,11 @@
 /* External Imports */
 import bre, { ethers } from 'hardhat'
+import { fromHexString } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
 import { ModifiableContract, ModifiableContractFactory } from './types'
 import { getStorageLayout, getStorageSlots } from './storage'
 import { bindSmod } from './binding'
-import { fromHexString } from '@eth-optimism/core-utils'
 import { toHexString32 } from '../utils'
 
 /**
@@ -26,7 +26,7 @@ export const smoddit = async (
 
   const provider =
     bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
+    '_wrapped' as any
     ]['_wrapped' as any]
   const pStateManager = provider['_node' as any]['_vm' as any].pStateManager
   const originalDeployFn = factory.deploy.bind(factory)
