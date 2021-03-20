@@ -1,115 +1,118 @@
 /* Imports: External */
-import bre from 'hardhat'
 import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
+import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
 /* Imports: Internal */
-import { MockContract } from './types'
+import { MockContract, VmError } from './types'
 import { toHexString } from '../utils'
 
-class VmError {
-  error: string
-  errorType: string
-
-  constructor(error: string) {
-    this.error = error
-    this.errorType = 'VmError'
-  }
+/**
+ * Checks to see if smock has been initialized already. Basically just checking to see if we've
+ * attached smock state to the VM already.
+ * @param provider Base hardhat network provider to check.
+ * @return Whether or not the provider has already been modified to support smock.
+ */
+const isSmockInitialized = (provider: HardhatNetworkProvider): boolean => {
+  return (provider as any)._node._vm._smockState !== undefined
 }
 
-const initSmock = (vm: any): void => {
-  if (vm._smock) {
+/**
+ * Modifies a hardhat provider to be compatible with smock.
+ * @param provider Base hardhat network provider to modify.
+ */
+const initializeSmock = (provider: HardhatNetworkProvider): void => {
+  if (isSmockInitialized(provider)) {
     return
   }
 
-  vm._smock = {
+  // Will need to reference these things.
+  const node = (provider as any)._node
+  const vm = node._vm
+
+  // Attach some extra state to the VM.
+  vm._smockState = {
     mocks: {},
     calls: {},
     messages: [],
-    shouldReturnCode: false,
   }
 
+  // Wipe out our list of calls before each transaction.
   vm.on('beforeTx', () => {
-    vm._smock.calls = {}
+    vm._smockState.calls = {}
   })
 
+  // Watch for new EVM messages (call frames).
   vm.on('beforeMessage', (message: any) => {
+    // Happens with contract creations. If the current message is a contract creation then it can't
+    // be a call to a smocked contract.
     if (!message.to) {
       return
     }
 
     const target = toHexString(message.to).toLowerCase()
-    if (!(target in vm._smock.mocks)) {
+
+    // Check if the target address is a smocked contract.
+    if (!(target in vm._smockState.mocks)) {
       return
     }
 
-    if (!(target in vm._smock.calls)) {
-      vm._smock.calls[target] = []
+    // Initialize the array of calls to this smock if not done already.
+    if (!(target in vm._smockState.calls)) {
+      vm._smockState.calls[target] = []
     }
 
-    vm._smock.calls[target].push(message.data)
-    vm._smock.messages.push(message)
-
-    // Return the real (empty) while in the message context.
-    vm._smock.shouldReturnCode = true
+    // Record this message for later.
+    vm._smockState.calls[target].push(message.data)
+    vm._smockState.messages.push(message)
   })
 
+  // Now *this* is a hack.
+  // Ethereumjs-vm passes `result` by *reference* into the `afterMessage` event. Mutating the
+  // `result` object here will actually mutate the result in the VM. Magic.
   vm.on('afterMessage', async (result: any) => {
-    if (result && result.createdAddress) {
+    // We currently defer to contract creations, meaning we'll "unsmock" an address if a user
+    // later creates a contract at that address. Not sure how to handle this case. Very open to
+    // ideas.
+    if (result.createdAddress) {
       const created = toHexString(result.createdAddress).toLowerCase()
-      if (created in vm._smock.mocks) {
-        delete vm._smock.mocks[created]
+      if (created in vm._smockState.mocks) {
+        delete vm._smockState.mocks[created]
       }
     }
 
-    if (vm._smock.messages.length === 0) {
+    // Check if we have messages that need to be handled.
+    if (vm._smockState.messages.length === 0) {
       return
     }
 
-    const message = vm._smock.messages.pop()
+    // Handle the last message that was pushed to the array of messages. This works because smock
+    // contracts never create new sub-calls (meaning this `afterMessage` event corresponds directly
+    // to a `beforeMessage` event emitted during a call to a smock contract).
+    const message = vm._smockState.messages.pop()
     const target = toHexString(message.to).toLowerCase()
 
-    if (!(target in vm._smock.mocks)) {
+    // Not sure if this can ever actually happen? Just being safe.
+    if (!(target in vm._smockState.mocks)) {
       return
     }
 
-    const mock: MockContract = vm._smock.mocks[target]
-
+    // Compute the mock return data.
+    const mock: MockContract = vm._smockState.mocks[target]
     const { resolve, returnValue } = mock._smockit(message.data)
 
+    // Set the mock return data, potentially set the `exceptionError` field if the user requested
+    // a revert.
     result.execResult.returnValue = returnValue
     if (resolve === 'revert') {
       result.execResult.exceptionError = new VmError('smocked revert')
     }
   })
 
-  vm.on('step', () => {
-    // Return the fake (non-empty) while in the interpreter context.
-    vm._smock.shouldReturnCode = false
-  })
-
-  const originalGetContractCodeFn = vm.pStateManager.getContractCode.bind(
-    vm.pStateManager
-  )
-  vm.pStateManager.getContractCode = async (
-    addressBuf: Buffer
-  ): Promise<Buffer> => {
-    const address = toHexString(addressBuf).toLowerCase()
-    if (address in vm._smock.mocks && vm._smock.shouldReturnCode === false) {
-      return Buffer.from('F3', 'hex')
-    } else {
-      return originalGetContractCodeFn(addressBuf)
-    }
-  }
-
-  const provider =
-    bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
-    ]['_wrapped' as any]
-  const buidlerNode = provider['_node' as any]
-  const originalManagerErrorsFn = buidlerNode['_manageErrors' as any].bind(
-    buidlerNode
-  )
-  buidlerNode['_manageErrors' as any] = async (
+  // Here we're fixing with hardhat's internal error management. Smock is a bit weird and messes
+  // with stack traces so we need to help hardhat out a bit when it comes to smock-specific
+  // errors.
+  const originalManagerErrorsFn = node._manageErrors.bind(node)
+  node._manageErrors = async (
     vmResult: any,
     vmTrace: any,
     vmTracerError?: any
@@ -119,19 +122,37 @@ const initSmock = (vm: any): void => {
       vmResult.exceptionError.error === 'smocked revert'
     ) {
       throw new TransactionExecutionError('Transaction failed: revert')
-    } else {
-      return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
     }
+
+    return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
   }
 }
 
-export const bindSmock = (mock: MockContract): void => {
-  const provider =
-    bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
-    ]['_wrapped' as any]
-  const vm = provider['_node' as any]['_vm' as any]
-  initSmock(vm)
+/**
+ * Attaches a smocked contract to a hardhat network provider. Will also modify the provider to be
+ * compatible with smock if not done already.
+ * @param mock Smocked contract to attach to a provider.
+ * @param provider Hardhat network provider to attach the contract to.
+ */
+export const bindSmock = async (
+  mock: MockContract,
+  provider: HardhatNetworkProvider
+): Promise<void> => {
+  if (!isSmockInitialized(provider)) {
+    initializeSmock(provider)
+  }
 
-  vm._smock.mocks[mock.address.toLowerCase()] = mock
+  const vm = (provider as any)._node._vm
+  const pStateManager = vm.pStateManager
+
+  // Add mock to our list of mocks currently attached to the VM.
+  vm._smockState.mocks[mock.address.toLowerCase()] = mock
+
+  // Set the contract code for our mock to 0x00 == STOP. Need some non-empty contract code because
+  // Solidity will sometimes throw if it's calling something without code (I forget the exact
+  // scenario that causes this throw).
+  await pStateManager.putContractCode(
+    mock.address.toLowerCase(),
+    Buffer.from('00', 'hex')
+  )
 }

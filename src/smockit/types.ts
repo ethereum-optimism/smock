@@ -42,3 +42,13 @@ export type MockContract = Contract & {
     [name: string]: MockContractFunction
   }
 }
+
+export class VmError {
+  error: string
+  errorType: string
+
+  constructor(error: string) {
+    this.error = error
+    this.errorType = 'VmError'
+  }
+}
