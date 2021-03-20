@@ -1,5 +1,4 @@
 /* Imports: External */
-import bre from 'hardhat'
 import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
@@ -7,7 +6,13 @@ import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provide
 import { MockContract, VmError } from './types'
 import { toHexString } from '../utils'
 
-const isSmockInitialized = (provider: any): boolean => {
+/**
+ * Checks to see if smock has been initialized already. Basically just checking to see if we've
+ * attached smock state to the VM already.
+ * @param provider Base hardhat network provider to check.
+ * @return Whether or not the provider has already been modified to support smock.
+ */
+const isSmockInitialized = (provider: HardhatNetworkProvider): boolean => {
   return (provider as any)._node._vm._smockState !== undefined
 }
 
@@ -16,7 +21,9 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
     return
   }
 
-  const vm = (provider as any)._node._vm
+  const node = (provider as any)._node
+  const vm = node._vm
+  const pStateManager = vm.pStateManager
 
   vm._smockState = {
     mocks: {},
@@ -84,28 +91,25 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
     vm._smockState.shouldReturnCode = false
   })
 
-  const originalGetContractCodeFn = vm.pStateManager.getContractCode.bind(
-    vm.pStateManager
+  const originalGetContractCodeFn = pStateManager.getContractCode.bind(
+    pStateManager
   )
-  vm.pStateManager.getContractCode = async (
-    addressBuf: Buffer
-  ): Promise<Buffer> => {
-    const address = toHexString(addressBuf).toLowerCase()
+  pStateManager.getContractCode = async (address: Buffer): Promise<Buffer> => {
     if (
-      address in vm._smockState.mocks &&
+      toHexString(address).toLowerCase() in vm._smockState.mocks &&
       vm._smockState.shouldReturnCode === false
     ) {
-      return Buffer.from('F3', 'hex')
-    } else {
-      return originalGetContractCodeFn(addressBuf)
+      return Buffer.from('00', 'hex') // 0x00 == STOP
     }
+
+    return originalGetContractCodeFn(address)
   }
 
-  const buidlerNode = provider['_node' as any]
-  const originalManagerErrorsFn = buidlerNode['_manageErrors' as any].bind(
-    buidlerNode
-  )
-  buidlerNode['_manageErrors' as any] = async (
+  // Here we're fixing with hardhat's internal error management. Smock is a bit weird and messes
+  // with stack traces so we need to help hardhat out a bit when it comes to smock-specific
+  // errors.
+  const originalManagerErrorsFn = node._manageErrors.bind(node)
+  node._manageErrors = async (
     vmResult: any,
     vmTrace: any,
     vmTracerError?: any
@@ -115,9 +119,9 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
       vmResult.exceptionError.error === 'smocked revert'
     ) {
       throw new TransactionExecutionError('Transaction failed: revert')
-    } else {
-      return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
     }
+
+    return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
   }
 }
 
