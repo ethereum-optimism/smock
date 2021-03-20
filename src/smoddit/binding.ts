@@ -77,7 +77,7 @@ const initSmod = (vm: any): void => {
 export const bindSmod = (contract: ModifiableContract): void => {
   const provider =
     bre.network.provider['_wrapped' as any]['_wrapped' as any][
-    '_wrapped' as any
+      '_wrapped' as any
     ]['_wrapped' as any]
   const vm = provider['_node' as any]['_vm' as any]
   initSmod(vm)

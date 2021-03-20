@@ -29,13 +29,13 @@ export const getStorageLayout = async (name: string): Promise<any> => {
   const artifacts = new Artifacts(hre.config.paths.artifacts)
   const { sourceName, contractName } = artifacts.readArtifactSync(name)
   const buildInfo = await hre.artifacts.getBuildInfo(
-    `${ sourceName }:${ contractName }`
+    `${sourceName}:${contractName}`
   )
   const output = buildInfo.output.contracts[sourceName][contractName]
 
   if (!('storageLayout' in output)) {
     throw new Error(
-      `Storage layout for ${ name } not found. Did you forget to set the storage layout compiler option in your hardhat config? Read more: https://github.com/ethereum-optimism/smock#note-on-using-smoddit`
+      `Storage layout for ${name} not found. Did you forget to set the storage layout compiler option in your hardhat config? Read more: https://github.com/ethereum-optimism/smock#note-on-using-smoddit`
     )
   }
 
@@ -65,7 +65,7 @@ export const getStorageSlots = (
 
     if (!variableDef) {
       throw new Error(
-        `Could not find a matching variable definition for ${ variableLabel }`
+        `Could not find a matching variable definition for ${variableLabel}`
       )
     }
 
@@ -82,7 +82,7 @@ export const getStorageSlots = (
 
     if (!inputSlot) {
       throw new Error(
-        `Could not find a matching slot definition for ${ slotLabel }`
+        `Could not find a matching slot definition for ${slotLabel}`
       )
     }
 
@@ -123,13 +123,13 @@ const flattenObject = (
     return res
   } else if (_.isArray(obj)) {
     for (let i = 0; i < obj.length; i++) {
-      const pre = _.isEmpty(prefix) ? `${ i }` : `${ prefix }.${ i }`
+      const pre = _.isEmpty(prefix) ? `${i}` : `${prefix}.${i}`
       flattenObject(obj[i], pre, res)
     }
     return res
   } else if (_.isPlainObject(obj)) {
     for (const key of Object.keys(obj)) {
-      const pre = _.isEmpty(prefix) ? key : `${ prefix }.${ key }`
+      const pre = _.isEmpty(prefix) ? key : `${prefix}.${key}`
       flattenObject(obj[key], pre, res)
     }
     return res
@@ -169,6 +169,6 @@ const getInputSlots = (
       ]
     }
   } else {
-    throw new Error(`Encoding type not supported: ${ inputType.encoding }`)
+    throw new Error(`Encoding type not supported: ${inputType.encoding}`)
   }
 }
