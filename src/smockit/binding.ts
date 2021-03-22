@@ -1,10 +1,10 @@
 /* Imports: External */
 import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
+import { toHexString } from '@eth-optimism/core-utils'
 
 /* Imports: Internal */
 import { MockContract, VmError } from './types'
-import { toHexString } from '../utils'
 
 /**
  * Checks to see if smock has been initialized already. Basically just checking to see if we've
