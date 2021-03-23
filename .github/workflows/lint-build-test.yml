@@ -3,10 +3,10 @@ name: smock - lint, build, test
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 jobs:
   build-test-lint:
