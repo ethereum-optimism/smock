@@ -8,7 +8,7 @@ const config: HardhatUserConfig = {
     sources: './test/contracts',
   },
   solidity: {
-    version: '0.7.0',
+    version: '0.7.6',
     settings: {
       outputSelection: {
         '*': {

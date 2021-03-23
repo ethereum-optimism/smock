@@ -1,5 +1,4 @@
 /* Imports: External */
-import { ethers } from 'hardhat'
 import { expect } from 'chai'
 import { BigNumber } from 'ethers'
 import _ from 'lodash'

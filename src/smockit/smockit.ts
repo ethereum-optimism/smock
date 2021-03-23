@@ -7,6 +7,7 @@ import { toHexString, fromHexString } from '@eth-optimism/core-utils'
 
 /* Imports: Internal */
 import {
+  isArtifact,
   MockContract,
   MockContractFunction,
   MockReturnValue,
@@ -64,17 +65,26 @@ const findBaseHardhatProvider = (
  * Generates an ethers Interface instance when given a smock spec. Meant for standardizing the
  * various input types we might reasonably want to support.
  * @param spec Smock specification object. Thing you want to base the interface on.
+ * @param hre Hardhat runtime environment. Used so we can
  * @return Interface generated from the spec.
  */
-const makeContractInterfaceFromSpec = (
+const makeContractInterfaceFromSpec = async (
   spec: SmockSpec
-): ethers.utils.Interface => {
+): Promise<ethers.utils.Interface> => {
   if (spec instanceof Contract) {
     return spec.interface
   } else if (spec instanceof ContractFactory) {
     return spec.interface
   } else if (spec instanceof ethers.utils.Interface) {
     return spec
+  } else if (isArtifact(spec)) {
+    return new ethers.utils.Interface(spec.abi)
+  } else if (typeof spec === 'string') {
+    try {
+      return new ethers.utils.Interface(spec)
+    } catch (err) {
+      return (await hre.ethers.getContractFactory(spec)).interface
+    }
   } else {
     return new ethers.utils.Interface(spec)
   }
@@ -93,6 +103,9 @@ const smockifyFunction = (
   vm: SmockedVM
 ): MockContractFunction => {
   return {
+    reset: () => {
+      return
+    },
     get calls() {
       return vm._smockState.calls[contract.address.toLowerCase()]
         .map((calldataBuf: Buffer) => {
@@ -180,12 +193,20 @@ export const smockit = async (
   // way is nice because it "feels" more like a contract (as long as you're using ethers).
   const contract = new ethers.Contract(
     opts.address || makeRandomAddress(),
-    makeContractInterfaceFromSpec(spec),
+    await makeContractInterfaceFromSpec(spec),
     opts.provider || hre.ethers.provider // TODO: Probably check that this exists.
   ) as MockContract
 
-  // Smock all of the contract functions.
-  contract.smocked = {}
+  // Start by smocking the fallback.
+  contract.smocked = {
+    fallback: smockifyFunction(
+      contract,
+      'fallback',
+      (provider as any)._node._vm
+    ),
+  }
+
+  // Smock the rest of the contract functions.
   for (const functionName of Object.keys(contract.functions)) {
     contract.smocked[functionName] = smockifyFunction(
       contract,
@@ -195,55 +216,113 @@ export const smockit = async (
   }
 
   // TODO: Make this less of a hack.
-  ;(contract as any)._smockit = function (
+  ;(contract as any)._smockit = async function (
     data: Buffer
-  ): {
+  ): Promise<{
     resolve: 'return' | 'revert'
+    functionName: string
+    rawReturnValue: any
     returnValue: Buffer
-  } {
-    const calldata = toHexString(data)
-    const sighash = toHexString(data.slice(0, 4))
+    gasUsed: number
+  }> {
+    let fn: any
+    try {
+      const sighash = toHexString(data.slice(0, 4))
+      fn = this.interface.getFunction(sighash)
+    } catch (err) {
+      fn = null
+    }
 
-    const fn = this.interface.getFunction(sighash)
-    const params = this.interface.decodeFunctionData(fn, calldata)
+    let params: any
+    let mockFn: any
+    if (fn !== null) {
+      params = this.interface.decodeFunctionData(fn, toHexString(data))
+      mockFn = this.smocked[fn.name]
+    } else {
+      params = toHexString(data)
+      mockFn = this.smocked.fallback
+    }
 
-    const mockFn = this.smocked[fn.name]
     const rawReturnValue =
-      mockFn.will.returnValue instanceof Function
-        ? mockFn.will.returnValue(...params)
+      mockFn.will?.returnValue instanceof Function
+        ? await mockFn.will.returnValue(...params)
         : mockFn.will.returnValue
 
     let encodedReturnValue: string = '0x'
     if (rawReturnValue !== undefined) {
-      try {
-        encodedReturnValue = this.interface.encodeFunctionResult(fn, [
-          rawReturnValue,
-        ])
-      } catch (err) {
-        if (err.code === 'INVALID_ARGUMENT') {
-          try {
-            encodedReturnValue = this.interface.encodeFunctionResult(
-              fn,
-              rawReturnValue
-            )
-          } catch {
-            if (typeof rawReturnValue !== 'string') {
-              throw new Error(
-                `Could not properly encode mock return value for ${fn.name}`
-              )
-            }
-
-            encodedReturnValue = rawReturnValue
-          }
-        } else {
-          throw err
+      if (mockFn.will?.resolve === 'revert') {
+        if (typeof rawReturnValue !== 'string') {
+          throw new Error(
+            `Smock: Tried to revert with a non-string (or non-bytes) type: ${typeof rawReturnValue}`
+          )
         }
+
+        if (rawReturnValue.startsWith('0x')) {
+          encodedReturnValue = rawReturnValue
+        } else {
+          const errorface = new ethers.utils.Interface([
+            {
+              inputs: [
+                {
+                  name: '_reason',
+                  type: 'string',
+                },
+              ],
+              name: 'Error',
+              outputs: [],
+              stateMutability: 'nonpayable',
+              type: 'function',
+            },
+          ])
+
+          encodedReturnValue = errorface.encodeFunctionData('Error', [
+            rawReturnValue,
+          ])
+        }
+      } else {
+        if (fn === null) {
+          encodedReturnValue = rawReturnValue
+        } else {
+          try {
+            encodedReturnValue = this.interface.encodeFunctionResult(fn, [
+              rawReturnValue,
+            ])
+          } catch (err) {
+            if (err.code === 'INVALID_ARGUMENT') {
+              try {
+                encodedReturnValue = this.interface.encodeFunctionResult(
+                  fn,
+                  rawReturnValue
+                )
+              } catch {
+                if (typeof rawReturnValue !== 'string') {
+                  throw new Error(
+                    `Could not properly encode mock return value for ${fn.name}`
+                  )
+                }
+
+                encodedReturnValue = rawReturnValue
+              }
+            } else {
+              throw err
+            }
+          }
+        }
+      }
+    } else {
+      if (fn === null) {
+        encodedReturnValue = '0x'
+      } else {
+        encodedReturnValue = '0x' + '00'.repeat(2048)
       }
     }
 
     return {
-      resolve: mockFn.will.resolve,
+      resolve: mockFn.will?.resolve,
+      functionName: fn ? fn.name : null,
+      rawReturnValue,
       returnValue: fromHexString(encodedReturnValue),
+      gasUsed: mockFn.gasUsed || 0,
     }
   }
 
