@@ -26,7 +26,7 @@ export const smoddit = async (
 
   const provider =
     bre.network.provider['_wrapped' as any]['_wrapped' as any][
-    '_wrapped' as any
+      '_wrapped' as any
     ]['_wrapped' as any]
   const pStateManager = provider['_node' as any]['_vm' as any].pStateManager
   const originalDeployFn = factory.deploy.bind(factory)

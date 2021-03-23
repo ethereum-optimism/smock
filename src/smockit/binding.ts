@@ -1,7 +1,7 @@
 /* Imports: External */
 import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
-import { toHexString } from '@eth-optimism/core-utils'
+import { toHexString, fromHexString } from '@eth-optimism/core-utils'
 
 /* Imports: Internal */
 import { MockContract, SmockedVM, VmError } from './types'
