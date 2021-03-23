@@ -52,3 +52,21 @@ export class VmError {
     this.errorType = 'VmError'
   }
 }
+
+export interface SmockedVM {
+  _smockState: {
+    mocks: {
+      [address: string]: MockContract
+    }
+    calls: {
+      [address: string]: any[]
+    }
+    messages: any[]
+  }
+
+  on: (event: string, callback: Function) => void
+
+  pStateManager: {
+    putContractCode: (address: Buffer, code: Buffer) => Promise<void>
+  }
+}

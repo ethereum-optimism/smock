@@ -4,7 +4,7 @@ import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provide
 import { toHexString } from '@eth-optimism/core-utils'
 
 /* Imports: Internal */
-import { MockContract, VmError } from './types'
+import { MockContract, SmockedVM, VmError } from './types'
 
 /**
  * Checks to see if smock has been initialized already. Basically just checking to see if we've
@@ -27,7 +27,7 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
 
   // Will need to reference these things.
   const node = (provider as any)._node
-  const vm = node._vm
+  const vm: SmockedVM = node._vm
 
   // Attach some extra state to the VM.
   vm._smockState = {
@@ -142,7 +142,7 @@ export const bindSmock = async (
     initializeSmock(provider)
   }
 
-  const vm = (provider as any)._node._vm
+  const vm: SmockedVM = (provider as any)._node._vm
   const pStateManager = vm.pStateManager
 
   // Add mock to our list of mocks currently attached to the VM.
@@ -152,7 +152,7 @@ export const bindSmock = async (
   // Solidity will sometimes throw if it's calling something without code (I forget the exact
   // scenario that causes this throw).
   await pStateManager.putContractCode(
-    mock.address.toLowerCase(),
+    fromHexString(mock.address),
     Buffer.from('00', 'hex')
   )
 }
