@@ -49,16 +49,6 @@ export type MockContract = Contract & {
   }
 }
 
-export class VmError {
-  error: string
-  errorType: string
-
-  constructor(error: string) {
-    this.error = error
-    this.errorType = 'VmError'
-  }
-}
-
 export interface SmockedVM {
   _smockState: {
     mocks: {
