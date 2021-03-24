@@ -1,10 +1,13 @@
 /* Imports: External */
 import { TransactionExecutionError } from 'hardhat/internal/hardhat-network/provider/errors'
 import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
+import { decodeRevertReason } from 'hardhat/internal/hardhat-network/stack-traces/revert-reasons'
+import { VmError } from '@nomiclabs/ethereumjs-vm/dist/exceptions'
 import { toHexString, fromHexString } from '@eth-optimism/core-utils'
+import BN from 'bn.js'
 
 /* Imports: Internal */
-import { MockContract, SmockedVM, VmError } from './types'
+import { MockContract, SmockedVM } from './types'
 
 /**
  * Checks to see if smock has been initialized already. Basically just checking to see if we've
@@ -98,14 +101,21 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
 
     // Compute the mock return data.
     const mock: MockContract = vm._smockState.mocks[target]
-    const { resolve, returnValue } = mock._smockit(message.data)
+    const {
+      resolve,
+      functionName,
+      rawReturnValue,
+      returnValue,
+      gasUsed,
+    } = await mock._smockit(message.data)
 
     // Set the mock return data, potentially set the `exceptionError` field if the user requested
     // a revert.
+    result.gasUsed = new BN(gasUsed)
     result.execResult.returnValue = returnValue
-    if (resolve === 'revert') {
-      result.execResult.exceptionError = new VmError('smocked revert')
-    }
+    result.execResult.gasUsed = new BN(gasUsed)
+    result.execResult.exceptionError =
+      resolve === 'revert' ? new VmError('smocked revert' as any) : undefined
   })
 
   // Here we're fixing with hardhat's internal error management. Smock is a bit weird and messes
@@ -121,7 +131,11 @@ const initializeSmock = (provider: HardhatNetworkProvider): void => {
       vmResult.exceptionError &&
       vmResult.exceptionError.error === 'smocked revert'
     ) {
-      throw new TransactionExecutionError('Transaction failed: revert')
+      return new TransactionExecutionError(
+        `VM Exception while processing transaction: revert ${decodeRevertReason(
+          vmResult.returnValue
+        )}`
+      )
     }
 
     return originalManagerErrorsFn(vmResult, vmTrace, vmTracerError)
