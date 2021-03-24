@@ -1,28 +1,8 @@
 {
-    "compilerOptions": {
-        "module": "commonjs",
-        "target": "es2017",
-        "declaration": true,
-        "noImplicitAny": false,
-        "removeComments": true,
-        "noLib": false,
-        "emitDecoratorMetadata": true,
-        "experimentalDecorators": true,
-        "sourceMap": true,
-        "outDir": "./build",
-        "baseUrl": "./",
-        "resolveJsonModule": true,
-        "esModuleInterop": true,
-        "lib": [
-            "es7"
-        ],
-        "typeRoots": [
-            "node_modules/@types"
-        ]
-    },
-    "include": ["*.ts", "**/*.ts"],
-    "exclude": ["./build", "node_modules", "./test"],
-    "files": [
-        "./hardhat.config.ts"
-    ]
+  "extends": "@eth-optimism/dev/tsconfig.json",
+  "include": ["*.ts", "**/*.ts"],
+  "exclude": ["./build", "node_modules", "./test"],
+  "files": [
+      "./hardhat.config.ts"
+  ]
 }
