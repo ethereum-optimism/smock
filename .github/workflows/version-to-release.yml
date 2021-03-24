@@ -3,8 +3,7 @@ name: Auto tag-release-publish
 on:
   push:
     branches:
-      - master
-      - nu-nu
+      - main
 
 jobs:
   tag:
