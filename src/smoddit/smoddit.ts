@@ -3,7 +3,7 @@ import hre from 'hardhat'
 import { fromHexString } from '@eth-optimism/core-utils'
 
 /* Internal Imports */
-import { ModifiableContract, ModifiableContractFactory } from './types'
+import { ModifiableContract, ModifiableContractFactory, Smodify } from './types'
 import { getStorageLayout, getStorageSlots } from './storage'
 import { bindSmod } from './binding'
 import { toHexString32 } from '../utils'
@@ -42,45 +42,53 @@ export const smoddit = async (
   factory.deploy = async (...args: any[]): Promise<ModifiableContract> => {
     const contract: ModifiableContract = await originalDeployFn(...args)
     contract._smodded = {}
+
+    const put = (storage: any) => {
+      if (!storage) {
+        return
+      }
+
+      const slots = getStorageSlots(layout, storage)
+      for (const slot of slots) {
+        contract._smodded[slot.hash.toLowerCase()] = slot.value
+      }
+    }
+
+    const reset = () => {
+      contract._smodded = {}
+    }
+
+    const set = (storage: any) => {
+      contract.smodify.reset()
+      contract.smodify.put(storage)
+    }
+
+    const check = async (storage: any) => {
+      if (!storage) {
+        return true
+      }
+
+      const slots = getStorageSlots(layout, storage)
+      return slots.every(async (slot) => {
+        return (
+          toHexString32(
+            await pStateManager.getContractStorage(
+              fromHexString(contract.address),
+              fromHexString(slot.hash.toLowerCase())
+            )
+          ) === slot.value
+        )
+      })
+    }
+
     contract.smodify = {
-      put: function (storage: any) {
-        if (!storage) {
-          return
-        }
-
-        const slots = getStorageSlots(layout, storage)
-        for (const slot of slots) {
-          contract._smodded[slot.hash.toLowerCase()] = slot.value
-        }
-      },
-      set: function (storage: any) {
-        this.reset()
-        this.put(storage)
-      },
-      check: async function (storage: any) {
-        if (!storage) {
-          return true
-        }
-
-        const slots = getStorageSlots(layout, storage)
-        return slots.every(async (slot) => {
-          return (
-            toHexString32(
-              await pStateManager.getContractStorage(
-                fromHexString(contract.address),
-                fromHexString(slot.hash.toLowerCase())
-              )
-            ) === slot.value
-          )
-        })
-      },
-      reset: function () {
-        contract._smodded = {}
-      },
+      put,
+      reset,
+      set,
+      check,
     }
 
     bindSmod(contract, provider)
-
     return contract
   }
 
