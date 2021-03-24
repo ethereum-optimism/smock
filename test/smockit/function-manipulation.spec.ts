@@ -1,7 +1,6 @@
-import { expect } from '../setup'
-
 /* Imports: External */
 import { ethers } from 'hardhat'
+import { expect } from 'chai'
 import { toPlainObject } from 'lodash'
 import { BigNumber } from 'ethers'
 

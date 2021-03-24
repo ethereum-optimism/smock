@@ -1,7 +1,6 @@
-import { expect } from '../setup'
-
 /* Imports: External */
 import { ethers, artifacts } from 'hardhat'
+import { expect } from 'chai'
 
 /* Imports: Internal */
 import { smockit, isMockContract } from '../../src'
