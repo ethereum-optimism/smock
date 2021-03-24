@@ -1,10 +1,9 @@
 /* External Imports */
 import hre from 'hardhat'
 import { Artifacts } from 'hardhat/internal/artifacts'
-import { BigNumber } from 'ethers'
-import { keccak256 } from 'ethers/lib/utils'
-import _ from 'lodash'
+import { ethers } from 'ethers'
 import { remove0x } from '@eth-optimism/core-utils'
+import _ from 'lodash'
 
 /* Internal Imports */
 import { toHexString32 } from '../utils'
@@ -88,10 +87,14 @@ export const getStorageSlots = (
 
     let slotHash = toHexString32(baseSlot)
     for (let i = 0; i < baseDepth; i++) {
-      slotHash = keccak256(toHexString32(path[i + 1]) + remove0x(slotHash))
+      slotHash = ethers.utils.keccak256(
+        toHexString32(path[i + 1]) + remove0x(slotHash)
+      )
     }
 
-    slotHash = toHexString32(BigNumber.from(slotHash).add(inputSlot.slot))
+    slotHash = toHexString32(
+      ethers.BigNumber.from(slotHash).add(inputSlot.slot)
+    )
 
     slots.push({
       label: key,
@@ -115,7 +118,7 @@ const flattenObject = (
   prefix: string = '',
   res: any = {}
 ): Object => {
-  if (BigNumber.isBigNumber(obj)) {
+  if (ethers.BigNumber.isBigNumber(obj)) {
     res[prefix] = obj.toNumber()
     return res
   } else if (_.isString(obj) || _.isNumber(obj) || _.isBoolean(obj)) {

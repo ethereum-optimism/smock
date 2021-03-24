@@ -1,24 +1,36 @@
 /* External Imports */
-import bre from 'hardhat'
 import { toHexString, fromHexString } from '@eth-optimism/core-utils'
+import { HardhatNetworkProvider } from 'hardhat/internal/hardhat-network/provider/provider'
 
 /* Internal Imports */
 import { ModifiableContract } from './types'
 
 /**
- * Initializes smodding functionality.
- * @param vm ethereumjs-vm VM instance.
+ * Checks to see if smoddit has been initialized already.
+ * @param provider Base hardhat network provider to check.
+ * @return Whether or not the provider has already been modified to support smoddit.
  */
-const initSmod = (vm: any): void => {
-  if (vm._smod) {
+const isSmodInitialized = (provider: HardhatNetworkProvider): boolean => {
+  return (provider as any)._node._vm._smod !== undefined
+}
+
+/**
+ * Initializes smodding functionality.
+ * @param provider Base hardhat network provider to modify.
+ */
+const initializeSmod = (provider: HardhatNetworkProvider): void => {
+  if (isSmodInitialized(provider)) {
     return
   }
+
+  // Will need to reference these things.
+  const node = (provider as any)._node
+  const vm = node._vm
+  const pStateManager = vm.pStateManager
 
   vm._smod = {
     contracts: {},
   }
-
-  const pStateManager = vm.pStateManager
 
   const originalGetStorageFn = pStateManager.getContractStorage.bind(
     pStateManager
@@ -74,13 +86,16 @@ const initSmod = (vm: any): void => {
  * Binds the smodded contract to the VM.
  * @param contract Contract to bind.
  */
-export const bindSmod = (contract: ModifiableContract): void => {
-  const provider =
-    bre.network.provider['_wrapped' as any]['_wrapped' as any][
-      '_wrapped' as any
-    ]['_wrapped' as any]
-  const vm = provider['_node' as any]['_vm' as any]
-  initSmod(vm)
+export const bindSmod = (
+  contract: ModifiableContract,
+  provider: HardhatNetworkProvider
+): void => {
+  if (!isSmodInitialized(provider)) {
+    initializeSmod(provider)
+  }
 
+  const vm = (provider as any)._node._vm
+
+  // Add mock to our list of mocks currently attached to the VM.
   vm._smod.contracts[contract.address.toLowerCase()] = contract
 }
