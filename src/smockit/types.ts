@@ -24,7 +24,7 @@ export type MockReturnValue =
   | ((...params: any[]) => MockReturnValue)
 
 export interface MockContractFunction {
-  calls: string[]
+  calls: any[]
 
   reset: () => void
 
