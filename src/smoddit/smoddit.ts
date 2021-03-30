@@ -69,16 +69,20 @@ export const smoddit = async (
       }
 
       const slots = getStorageSlots(layout, storage)
-      return slots.every(async (slot) => {
-        return (
+      for (const slot of slots) {
+        if (
           toHexString32(
             await pStateManager.getContractStorage(
               fromHexString(contract.address),
               fromHexString(slot.hash.toLowerCase())
             )
-          ) === slot.value
-        )
-      })
+          ) !== slot.value
+        ) {
+          return false
+        }
+      }
+
+      return true
     }
 
     contract.smodify = {
