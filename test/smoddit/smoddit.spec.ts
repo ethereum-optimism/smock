@@ -110,6 +110,19 @@ describe('smoddit', () => {
 
         expect(await smod.getConstructorUint256()).to.equal(1234)
       })
+
+      it('should be able to set values in a bytes 5 => bool mapping', async () => {
+        const key = '0x0000005678'
+        const val = true
+
+        smod.smodify.put({
+          _bytes5ToBoolMap: {
+            [key]: val,
+          },
+        })
+
+        expect(await smod.getBytes5ToBoolMapValue(key)).to.equal(val)
+      })
     })
   })
 })

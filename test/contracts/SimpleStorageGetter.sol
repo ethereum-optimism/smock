@@ -15,6 +15,9 @@ contract SimpleStorageGetter {
     mapping (uint256 => uint256) _uint256Map;
     mapping (uint256 => mapping (uint256 => uint256)) _uint256NestedMap;
 
+    // specific stuff for regressions
+    mapping (bytes5 => bool) _bytes5ToBoolMap;
+
     constructor(
         uint256 _inA
     ) {
@@ -92,5 +95,17 @@ contract SimpleStorageGetter {
         )
     {
         return _uint256NestedMap[_keyA][_keyB];
+    }
+
+    function getBytes5ToBoolMapValue(
+        bytes5 _key
+    )
+        public
+        view
+        returns (
+            bool _out
+        )
+    {
+        return _bytes5ToBoolMap[_key];
     }
 }
