@@ -1,6 +1,6 @@
 {
   "name": "@eth-optimism/smock",
-  "version": "1.0.0-alpha.5",
+  "version": "1.0.0-alpha.6",
   "main": "build/src/index.js",
   "license": "MIT",
   "scripts": {
