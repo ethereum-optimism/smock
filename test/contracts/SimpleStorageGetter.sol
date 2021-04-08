@@ -8,15 +8,20 @@ contract SimpleStorageGetter {
         bool valueB;
     }
 
+    address internal _address;
     uint256 internal _constructorUint256;
     uint256 internal _uint256;
     bool internal _bool;
     SimpleStruct internal _SimpleStruct;
     mapping (uint256 => uint256) _uint256Map;
     mapping (uint256 => mapping (uint256 => uint256)) _uint256NestedMap;
-
-    // specific stuff for regressions
     mapping (bytes5 => bool) _bytes5ToBoolMap;
+    mapping (address => bool) _addressToBoolMap;
+    mapping (address => address) _addressToAddressMap;
+
+    // Testing storage slot packing.
+    bool internal _packedA;
+    address internal _packedB;
 
     constructor(
         uint256 _inA
@@ -60,6 +65,16 @@ contract SimpleStorageGetter {
         )
     {
         return _bool;
+    }
+
+    function getAddress()
+        public
+        view
+        returns (
+            address _out
+        )
+    {
+        return _address;
     }
 
     function getSimpleStruct()
@@ -107,5 +122,39 @@ contract SimpleStorageGetter {
         )
     {
         return _bytes5ToBoolMap[_key];
+    }
+
+    function getAddressToBoolMapValue(
+        address _key
+    )
+        public
+        view
+        returns (
+            bool _out
+        )
+    {
+        return _addressToBoolMap[_key];
+    }
+
+    function getAddressToAddressMapValue(
+        address _key
+    )
+        public
+        view
+        returns (
+            address _out
+        )
+    {
+        return _addressToAddressMap[_key];
+    }
+
+    function getPackedAddress()
+        public
+        view
+        returns (
+            address
+        )
+    {
+        return _packedB;
     }
 }
