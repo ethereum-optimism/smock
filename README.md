@@ -28,7 +28,7 @@ yarn add @eth-optimism/smock
 
 `smoddit` requires access to the internal storage layout of your smart contracts. The Solidity compiler exposes this via the `storageLayout` flag, which you need to enable at your hardhat config.
 
-Here's an example `hardhat.config.ts` that shows how to import the plugin:
+Here's an example `hardhat.config.ts` that shows how to enable this compiler flag:
 
 ```typescript
 // hardhat.config.ts
