@@ -1,3 +1,5 @@
+**[DEPRECATED]** This repository is now deprecated in favour of the new development [monorepo](https://github.com/ethereum-optimism/optimism-monorepo).
+
 # @eth-optimisim/smock
 
 `smock` is a utility package that can generate mock Solidity contracts (for testing). `smock` hooks into a `ethereumjs-vm` instance so that mock contract functions can be written entirely in JavaScript. `smock` currently only supports [Hardhat](http://hardhat.org/), but will be extended to support other testing frameworks.
